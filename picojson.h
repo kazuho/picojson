@@ -78,6 +78,7 @@ namespace picojson {
     const value& get(size_t idx) const;
     const value& get(const std::string& key) const;
     std::string to_str() const;
+    template <typename Iter> void serialize(Iter os) const;
     std::string serialize() const;
   };
   
@@ -210,11 +211,15 @@ namespace picojson {
     }
   }
   
-  inline std::string serialize_str(const std::string& s) {
-    std::string r("\"");
+  template <typename Iter> void copy(const std::string& s, Iter oi) {
+    std::copy(s.begin(), s.end(), oi);
+  }
+  
+  template <typename Iter> void serialize_str(const std::string& s, Iter oi) {
+    *oi++ = '"';
     for (std::string::const_iterator i = s.begin(); i != s.end(); ++i) {
       switch (*i) {
-#define MAP(val, sym) case val: r += sym; break
+#define MAP(val, sym) case val: copy(sym, oi); break
 	MAP('"', "\\\"");
 	MAP('\\', "\\\\");
 	MAP('/', "\\/");
@@ -228,45 +233,57 @@ namespace picojson {
 	if ((unsigned char)*i <= 0x20 || *i == 0x7f) {
 	  char buf[7];
 	  sprintf(buf, "\\u%04x", *i & 0xff);
-	  r += buf;
+	  copy(buf, buf + 6, oi);
 	  } else {
-	  r.push_back(*i);
+	  *oi++ = *i;
 	}
 	break;
       }
     }
-    return r + '"';
+    *oi++ = '"';
   }
   
-  inline std::string value::serialize() const {
+  template <typename Iter> void value::serialize(Iter oi) const {
     switch (type_) {
     case string_type:
-      return serialize_str(*string_);
+      serialize_str(*string_, oi);
+      break;
     case array_type: {
-      std::string r("[");
+      *oi++ = '[';
       for (array::const_iterator i = array_->begin(); i != array_->end(); ++i) {
 	if (i != array_->begin()) {
-	  r.push_back(',');
+	  *oi++ = ',';
 	}
-	r += i->serialize();
+	i->serialize(oi);
       }
-      return r + ']';
+      *oi++ = ']';
+      break;
     }
     case object_type: {
-      std::string r("{");
+      *oi++ = '{';
       for (object::const_iterator i = object_->begin();
 	   i != object_->end();
 	   ++i) {
 	if (i != object_->begin()) {
-	  r.push_back(',');
+	  *oi++ = ',';
 	}
-	r += serialize_str(i->first) + ':' + i->second.serialize();
+	serialize_str(i->first, oi);
+	*oi++ = ':';
+	i->second.serialize(oi);
       }
-      return r + '}';
+      *oi++ = '}';
+      break;
     }
     default:
-      return to_str();
+      copy(to_str(), oi);
+      break;
     }
+  }
+  
+  inline std::string value::serialize() const {
+    std::string s;
+    serialize(std::back_inserter(s));
+    return s;
   }
   
   template <typename Iter> class input {
