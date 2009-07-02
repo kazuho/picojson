@@ -481,7 +481,7 @@ template <typename T> void is(const T& x, const T& y, const char* name = "")
 
 int main(void)
 {
-  plan(37);
+  plan(45);
   
   
 #define TEST(in, type, cmp) {						\
