@@ -271,11 +271,11 @@ namespace picojson {
     }
   };
   
-  template<typename Iter> static bool _parse_codepoint(std::string& out, input<Iter>& in) {
+  template<typename Iter> static int _parse_quadhex(input<Iter> &in) {
     int uni_ch = 0, hex;
     for (int i = 0; i < 4; i++) {
       if ((hex = in.getc()) == -1) {
-	return false;
+	return -1;
       }
       if ('0' <= hex && hex <= '9') {
 	hex -= '0';
@@ -284,9 +284,33 @@ namespace picojson {
       } else if ('a' <= hex && hex <= 'f') {
 	hex -= 'a' - 0xa;
       } else {
-	return false;
+	return -1;
       }
       uni_ch = uni_ch * 16 + hex;
+    }
+    return uni_ch;
+  }
+  
+  template<typename Iter> static bool _parse_codepoint(std::string& out, input<Iter>& in) {
+    int uni_ch;
+    if ((uni_ch = _parse_quadhex(in)) == -1) {
+      return false;
+    }
+    if (0xd800 <= uni_ch && uni_ch <= 0xdfff) {
+      if (0xdc00 <= uni_ch) {
+	// a second 16-bit of a surrogate pair appeared
+	return false;
+      }
+      // first 16-bit of surrogate pair, get the next one
+      if (in.getc() != '\\' || in.getc() != 'u') {
+	return false;
+      }
+      int second = _parse_quadhex(in);
+      if (! (0xdc00 <= second && second <= 0xdfff)) {
+	return false;
+      }
+      uni_ch = ((uni_ch - 0xd800) << 10) | ((second - 0xdc00) & 0x3ff);
+      uni_ch += 0x10000;
     }
     if (uni_ch < 0x80) {
       out.push_back(uni_ch);
@@ -294,7 +318,12 @@ namespace picojson {
       if (uni_ch < 0x800) {
 	out.push_back(0xc0 | (uni_ch >> 6));
       } else {
-	out.push_back(0xe0 | (uni_ch >> 12));
+	if (uni_ch < 0x10000) {
+	  out.push_back(0xe0 | (uni_ch >> 12));
+	} else {
+	  out.push_back(0xf0 | (uni_ch >> 18));
+	  out.push_back(0x80 | ((uni_ch >> 12) & 0x3f));
+	}
 	out.push_back(0x80 | ((uni_ch >> 6) & 0x3f));
       }
       out.push_back(0x80 | (uni_ch & 0x3f));
@@ -481,7 +510,7 @@ template <typename T> void is(const T& x, const T& y, const char* name = "")
 
 int main(void)
 {
-  plan(45);
+  plan(49);
   
   
 #define TEST(in, type, cmp) {						\
@@ -500,6 +529,7 @@ int main(void)
   TEST("\"\\\"\\\\\\/\\b\\f\\n\\r\\t\"", string, string("\"\\/\b\f\n\r\t"));
   TEST("\"\\u0061\\u30af\\u30ea\\u30b9\"", string,
        string("a\xe3\x82\xaf\xe3\x83\xaa\xe3\x82\xb9"));
+  TEST("\"\\ud840\\udc0b\"", string, string("\xf0\xa0\x80\x8b"));
 #undef TEST
 
 #define TEST(type, expr) {					       \
