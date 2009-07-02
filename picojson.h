@@ -75,6 +75,7 @@ namespace picojson {
     template <typename T> const T& get() const;
     template <typename T> T& get();
     operator bool() const;
+    const value& get(array::size_type idx) const;
     const value& get(const std::string& key) const;
     std::string to_str() const;
   };
@@ -171,6 +172,12 @@ namespace picojson {
     }
   }
   
+  inline const value& value::get(array::size_type idx) const {
+    static value s_undefined(undefined_type);
+    assert(is<array>());
+    return idx < array_->size() ? (*array_)[idx] : s_undefined;
+  }
+
   inline const value& value::get(const std::string& key) const {
     static value s_undefined(undefined_type);
     assert(is<object>());
@@ -417,7 +424,7 @@ template <typename T> void is(const T& x, const T& y, const char* name = "")
 
 int main(void)
 {
-  plan(24);
+  plan(37);
   
   
 #define TEST(in, type, cmp) {						\
@@ -449,11 +456,17 @@ int main(void)
   
   {
     picojson::value v;
-    const char *s = "[1,2,3]";
+    const char *s = "[1,true,\"hello\"]";
     string err = picojson::parse(v, s, s + strlen(s));
     ok(err.empty(), "array no error");
     ok(v.is<picojson::array>(), "array check type");
     is(v.get<picojson::array>().size(), size_t(3), "check array size");
+    ok(v.get(0).is<double>(), "check array[0] type");
+    is(v.get(0).get<double>(), 1.0, "check array[0] value");
+    ok(v.get(1).is<bool>(), "check array[1] type");
+    ok(v.get(1).get<bool>(), "check array[1] value");
+    ok(v.get(2).is<string>(), "check array[2] type");
+    is(v.get(2).get<string>(), string("hello"), "check array[2] value");
   }
   
   {
