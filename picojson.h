@@ -192,13 +192,20 @@ namespace picojson {
     case boolean_type:   return boolean_ ? "true" : "false";
     case number_type:    {
       char buf[256];
+#ifdef _WIN32
+      _snprintf_s(buf, sizeof(buf), "%f", number_);
+#else
       snprintf(buf, sizeof(buf), "%f", number_);
+#endif
       return buf;
     }
     case string_type:    return *string_;
     case array_type:     return "array";
     case object_type:    return "object";
     default:             assert(0);
+#ifdef _WIN32
+      __assume(0);
+#endif
     }
   }
   
