@@ -78,6 +78,7 @@ namespace picojson {
     const value& get(size_t idx) const;
     const value& get(const std::string& key) const;
     std::string to_str() const;
+    std::string serialize() const;
   };
   
   typedef value::array array;
@@ -206,6 +207,65 @@ namespace picojson {
 #ifdef _MSC_VER
       __assume(0);
 #endif
+    }
+  }
+  
+  inline std::string serialize_str(const std::string& s) {
+    std::string r("\"");
+    for (std::string::const_iterator i = s.begin(); i != s.end(); ++i) {
+      switch (*i) {
+#define MAP(val, sym) case val: r += sym; break
+	MAP('"', "\\\"");
+	MAP('\\', "\\\\");
+	MAP('/', "\\/");
+	MAP('\b', "\\b");
+	MAP('\f', "\\f");
+	MAP('\n', "\\n");
+	MAP('\r', "\\r");
+	MAP('\t', "\\t");
+#undef MAP
+      default:
+	if ((unsigned char)*i <= 0x20 || *i == 0x7f) {
+	  char buf[7];
+	  sprintf(buf, "\\u%04x", *i & 0xff);
+	  r += buf;
+	  } else {
+	  r.push_back(*i);
+	}
+	break;
+      }
+    }
+    return r + '"';
+  }
+  
+  inline std::string value::serialize() const {
+    switch (type_) {
+    case string_type:
+      return serialize_str(*string_);
+    case array_type: {
+      std::string r("[");
+      for (array::const_iterator i = array_->begin(); i != array_->end(); ++i) {
+	if (i != array_->begin()) {
+	  r.push_back(',');
+	}
+	r += i->serialize();
+      }
+      return r + ']';
+    }
+    case object_type: {
+      std::string r("{");
+      for (object::const_iterator i = object_->begin();
+	   i != object_->end();
+	   ++i) {
+	if (i != object_->begin()) {
+	  r.push_back(',');
+	}
+	r += serialize_str(i->first) + ':' + i->second.serialize();
+      }
+      return r + '}';
+    }
+    default:
+      return to_str();
     }
   }
   
@@ -513,10 +573,9 @@ template <typename T> void is(const T& x, const T& y, const char* name = "")
 
 int main(void)
 {
-  plan(49);
+  plan(54);
   
-  
-#define TEST(in, type, cmp) {						\
+#define TEST(in, type, cmp, serialize_test) {				\
     picojson::value v;							\
     const char* s = in;							\
     string err = picojson::parse(v, s, s + strlen(s));			\
@@ -524,15 +583,19 @@ int main(void)
     ok(v.is<type>(), in " check type");					\
     is(v.get<type>(), cmp, in " correct output");			\
     is(*s, '\0', in " read to eof");					\
+    if (serialize_test) {						\
+      is(v.serialize(), string(in), in " serialize");			\
+    }									\
   }
-  TEST("false", bool, false);
-  TEST("true", bool, true);
-  TEST("90.5", double, 90.5);
-  TEST("\"hello\"", string, string("hello"));
-  TEST("\"\\\"\\\\\\/\\b\\f\\n\\r\\t\"", string, string("\"\\/\b\f\n\r\t"));
+  TEST("false", bool, false, true);
+  TEST("true", bool, true, true);
+  TEST("90.5", double, 90.5, false);
+  TEST("\"hello\"", string, string("hello"), true);
+  TEST("\"\\\"\\\\\\/\\b\\f\\n\\r\\t\"", string, string("\"\\/\b\f\n\r\t"),
+       true);
   TEST("\"\\u0061\\u30af\\u30ea\\u30b9\"", string,
-       string("a\xe3\x82\xaf\xe3\x83\xaa\xe3\x82\xb9"));
-  TEST("\"\\ud840\\udc0b\"", string, string("\xf0\xa0\x80\x8b"));
+       string("a\xe3\x82\xaf\xe3\x83\xaa\xe3\x82\xb9"), false);
+  TEST("\"\\ud840\\udc0b\"", string, string("\xf0\xa0\x80\x8b"), false);
 #undef TEST
 
 #define TEST(type, expr) {					       \
@@ -572,6 +635,7 @@ int main(void)
     ok(v.get("a").is<bool>(), "check property exists");
     is(v.get("a").get<bool>(), true,
        "check property value");
+    is(v.serialize(), string("{\"a\":true}"), "serialize object");
   }
   
   {
