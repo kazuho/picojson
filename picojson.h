@@ -271,6 +271,37 @@ namespace picojson {
     }
   };
   
+  template<typename Iter> static bool _parse_codepoint(std::string& out, input<Iter>& in) {
+    int uni_ch = 0, hex;
+    for (int i = 0; i < 4; i++) {
+      if ((hex = in.getc()) == -1) {
+	return false;
+      }
+      if ('0' <= hex && hex <= '9') {
+	hex -= '0';
+      } else if ('A' <= hex && hex <= 'F') {
+	hex -= 'A' - 0xa;
+      } else if ('a' <= hex && hex <= 'f') {
+	hex -= 'a' - 0xa;
+      } else {
+	return false;
+      }
+      uni_ch = uni_ch * 16 + hex;
+    }
+    if (uni_ch < 0x80) {
+      out.push_back(uni_ch);
+    } else {
+      if (uni_ch < 0x800) {
+	out.push_back(0xc0 | (uni_ch >> 6));
+      } else {
+	out.push_back(0xe0 | (uni_ch >> 12));
+	out.push_back(0x80 | ((uni_ch >> 6) & 0x3f));
+      }
+      out.push_back(0x80 | (uni_ch & 0x3f));
+    }
+    return true;
+  }
+  
   template<typename Iter> static bool _parse_string(value& out, input<Iter>& in) {
     // gcc 4.1 cannot compile if the below two lines are merged into one :-(
     out = value(string_type);
@@ -280,12 +311,31 @@ namespace picojson {
       if (ch == '"') {
 	return true;
       } else if (ch == '\\') {
-	if (in.eof()) {
+	if ((ch = in.getc()) == -1) {
 	  return false;
 	}
-	ch = in.getc();
+	switch (ch) {
+#define MAP(sym, val) case sym: s.push_back(val); break
+	  MAP('"', '\"');
+	  MAP('\\', '\\');
+	  MAP('/', '/');
+	  MAP('b', '\b');
+	  MAP('f', '\f');
+	  MAP('n', '\n');
+	  MAP('r', '\r');
+	  MAP('t', '\t');
+#undef MAP
+	case 'u':
+	  if (! _parse_codepoint(s, in)) {
+	    return false;
+	  }
+	  break;
+	default:
+	  return false;
+	}
+      } else {
+	s.push_back(ch);
       }
-      s.push_back(ch);
     }
     return false;
   }
@@ -447,6 +497,9 @@ int main(void)
   TEST("true", bool, true);
   TEST("90.5", double, 90.5);
   TEST("\"hello\"", string, string("hello"));
+  TEST("\"\\\"\\\\\\/\\b\\f\\n\\r\\t\"", string, string("\"\\/\b\f\n\r\t"));
+  TEST("\"\\u0061\\u30af\\u30ea\\u30b9\"", string,
+       string("a\xe3\x82\xaf\xe3\x83\xaa\xe3\x82\xb9"));
 #undef TEST
 
 #define TEST(type, expr) {					       \
