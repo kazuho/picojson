@@ -67,7 +67,13 @@ namespace picojson {
       object* object_;
     };
   public:
-    value(int type = undefined_type);
+    value();
+    value(int type, bool);
+    value(bool b);
+    value(double n);
+    value(const std::string& s);
+    value(const array& a);
+    value(const object& o);
     ~value();
     value(const value& x);
     value& operator=(const value& x);
@@ -85,7 +91,9 @@ namespace picojson {
   typedef value::array array;
   typedef value::object object;
   
-  inline value::value(int type) : type_(type) {
+  inline value::value() : type_(undefined_type) {}
+  
+  inline value::value(int type, bool) : type_(type) {
     switch (type) {
 #define INIT(p, v) case p##type: p = v; break
       INIT(boolean_, false);
@@ -96,6 +104,26 @@ namespace picojson {
 #undef INIT
     default: break;
     }
+  }
+  
+  inline value::value(bool b) : type_(boolean_type) {
+    boolean_ = b;
+  }
+  
+  inline value::value(double n) : type_(number_type) {
+    number_ = n;
+  }
+  
+  inline value::value(const std::string& s) : type_(string_type) {
+    string_ = new std::string(s);
+  }
+  
+  inline value::value(const array& a) : type_(array_type) {
+    array_ = new array(a);
+  }
+  
+  inline value::value(const object& o) : type_(object_type) {
+    object_ = new object(o);
   }
   
   inline value::~value() {
@@ -175,13 +203,13 @@ namespace picojson {
   }
   
   inline const value& value::get(size_t idx) const {
-    static value s_undefined(undefined_type);
+    static value s_undefined;
     assert(is<array>());
     return idx < array_->size() ? (*array_)[idx] : s_undefined;
   }
 
   inline const value& value::get(const std::string& key) const {
-    static value s_undefined(undefined_type);
+    static value s_undefined;
     assert(is<object>());
     object::const_iterator i = object_->find(key);
     return i != object_->end() ? i->second : s_undefined;
@@ -413,7 +441,7 @@ namespace picojson {
   
   template<typename Iter> static bool _parse_string(value& out, input<Iter>& in) {
     // gcc 4.1 cannot compile if the below two lines are merged into one :-(
-    out = value(string_type);
+    out = value(string_type, false);
     std::string& s = out.get<std::string>();
     while (! in.eof()) {
       int ch = in.getc();
@@ -450,7 +478,7 @@ namespace picojson {
   }
   
   template <typename Iter> static bool _parse_array(value& out, input<Iter>& in) {
-    out = value(array_type);
+    out = value(array_type, false);
     array& a = out.get<array>();
     if (in.match("]") == input<Iter>::positive) {
       return true;
@@ -465,7 +493,7 @@ namespace picojson {
   }
   
   template <typename Iter> static bool _parse_object(value& out, input<Iter>& in) {
-    out = value(object_type);
+    out = value(object_type, false);
     object& o = out.get<object>();
     if (in.match("}") == input<Iter>::positive) {
       return true;
@@ -485,7 +513,6 @@ namespace picojson {
   }
   
   template <typename Iter> static bool _parse_number(value& out, input<Iter>& in) {
-    out = value(number_type);
     std::string num_str;
     while (! in.eof()) {
       int ch = in.getc();
@@ -498,7 +525,7 @@ namespace picojson {
       }
     }
     char* endp;
-    out.get<double>() = strtod(num_str.c_str(), &endp);
+    out = strtod(num_str.c_str(), &endp);
     return endp == num_str.c_str() + num_str.size();
   }
   
@@ -508,14 +535,13 @@ namespace picojson {
     (ret == input<Iter>::negative			\
      && (ret = in.match(p)) == input<Iter>::positive)
     if (IS("undefined")) {
-      out = value(undefined_type);
+      out = value();
     } else if (IS("null")) {
-      out = value(null_type);
+      out = value(null_type, false);
     } else if (IS("false")) {
-      out = value(boolean_type);
+      out = false;
     } else if (IS("true")) {
-      out = value(boolean_type);
-      out.get<bool>() = true;
+      out = true;
     } else if (IS("\"")) {
       return _parse_string(out, in);
     } else if (IS("[")) {
