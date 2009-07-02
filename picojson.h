@@ -75,7 +75,7 @@ namespace picojson {
     template <typename T> const T& get() const;
     template <typename T> T& get();
     operator bool() const;
-    const value& get(array::size_type idx) const;
+    const value& get(size_t idx) const;
     const value& get(const std::string& key) const;
     std::string to_str() const;
   };
@@ -172,7 +172,7 @@ namespace picojson {
     }
   }
   
-  inline const value& value::get(array::size_type idx) const {
+  inline const value& value::get(size_t idx) const {
     static value s_undefined(undefined_type);
     assert(is<array>());
     return idx < array_->size() ? (*array_)[idx] : s_undefined;
@@ -192,7 +192,7 @@ namespace picojson {
     case boolean_type:   return boolean_ ? "true" : "false";
     case number_type:    {
       char buf[256];
-#ifdef _WIN32
+#ifdef _MVC_VER
       _snprintf_s(buf, sizeof(buf), "%f", number_);
 #else
       snprintf(buf, sizeof(buf), "%f", number_);
@@ -203,7 +203,7 @@ namespace picojson {
     case array_type:     return "array";
     case object_type:    return "object";
     default:             assert(0);
-#ifdef _WIN32
+#ifdef _MVC_VER
       __assume(0);
 #endif
     }
