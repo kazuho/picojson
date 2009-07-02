@@ -241,9 +241,12 @@ namespace picojson {
     Iter cur() const { return cur_; }
     int line() const { return line_; }
     void skip_ws() {
-      while (! eof() && isspace(getc()))
-	;
-      ungetc();
+      while (! eof()) {
+	if (! isspace(getc())) {
+	  ungetc();
+	  break;
+	}
+      }
     }
     enum {
       error,
