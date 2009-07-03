@@ -352,7 +352,8 @@ namespace picojson {
     int line() const { return line_; }
     void skip_ws() {
       while (! eof()) {
-	if (! isspace(getc())) {
+	int ch = getc();
+	if (! (ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r')) {
 	  ungetc();
 	  break;
 	}
@@ -397,6 +398,7 @@ namespace picojson {
       } else if ('a' <= hex && hex <= 'f') {
 	hex -= 'a' - 0xa;
       } else {
+	in.ungetc();
 	return -1;
       }
       uni_ch = uni_ch * 16 + hex;
@@ -416,6 +418,7 @@ namespace picojson {
       }
       // first 16-bit of surrogate pair, get the next one
       if (in.getc() != '\\' || in.getc() != 'u') {
+	in.ungetc();
 	return false;
       }
       int second = _parse_quadhex(in);
@@ -450,7 +453,10 @@ namespace picojson {
     std::string& s = out.get<std::string>();
     while (! in.eof()) {
       int ch = in.getc();
-      if (ch == '"') {
+      if (ch < ' ') {
+	in.ungetc();
+	return false;
+      } else if (ch == '"') {
 	return true;
       } else if (ch == '\\') {
 	if ((ch = in.getc()) == -1) {
@@ -579,8 +585,9 @@ namespace picojson {
 	int ch = in.getc();
 	if (ch == '\n') {
 	  break;
+	} else if (ch >= ' ') {
+	  err += ch;
 	}
-	err += ch;
       }
     }
     pos = in.cur();
@@ -656,7 +663,7 @@ template <typename T> void is(const T& x, const T& y, const char* name = "")
 
 int main(void)
 {
-  plan(54);
+  plan(57);
   
 #define TEST(in, type, cmp, serialize_test) {				\
     picojson::value v;							\
@@ -720,13 +727,18 @@ int main(void)
        "check property value");
     is(v.serialize(), string("{\"a\":true}"), "serialize object");
   }
-  
-  {
-    picojson::value v;
-    const char *s = "falsoooo";
-    string err = picojson::parse(v, s, s + strlen(s));
-    is(err, string("syntax error at line 1 near: oooo"), "error message");
-  }
+
+#define TEST(json, msg) do {				\
+    picojson::value v;					\
+    const char *s = json;				\
+    string err = picojson::parse(v, s, s + strlen(s));	\
+    is(err, string("syntax error at line " msg), msg);	\
+  } while (0)
+  TEST("falsoa", "1 near: oa");
+  TEST("{]", "1 near: ]");
+  TEST("\n\bbell", "2 near: bell");
+  TEST("\"abc\nd\"", "1 near: ");
+#undef TEST
   
   return 0;
 }
