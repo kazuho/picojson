@@ -587,6 +587,35 @@ namespace picojson {
     return parse(out, ii, std::istreambuf_iterator<char>());
   }
   
+  template <bool FALSE> struct last_error_t {
+    static std::string s;
+  };
+  template <bool FALSE> std::string last_error_t<FALSE>::s;
+  
+  inline void set_last_error(const std::string& s) {
+    last_error_t<false>::s = s;
+  }
+  
+  inline const std::string& get_last_error() {
+    return last_error_t<false>::s;
+  }
+}
+
+inline std::istream& operator>>(std::istream& is, picojson::value& x)
+{
+  picojson::set_last_error(std::string());
+  std::string err = picojson::parse(x, is);
+  if (! err.empty()) {
+    picojson::set_last_error(err);
+    is.setstate(std::ios::failbit);
+  }
+  return is;
+}
+
+inline std::ostream& operator<<(std::ostream& os, const picojson::value& x)
+{
+  x.serialize(std::ostream_iterator<char>(os));
+  return os;
 }
 
 #endif
