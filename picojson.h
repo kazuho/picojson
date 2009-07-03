@@ -38,6 +38,14 @@
 #include <string>
 #include <vector>
 
+#ifdef _MSC_VER
+    #define SNPRINTF _snprintf_s
+    #pragma warning(push)
+    #pragma warning(disable : 4244) // conversion from int to char
+#else
+    #define SNPRINTF snprintf
+#endif
+
 namespace picojson {
   
   enum {
@@ -223,18 +231,14 @@ namespace picojson {
     case boolean_type:   return boolean_ ? "true" : "false";
     case number_type:    {
       char buf[256];
-#if _MSC_VER >= 1400 // VC 2005
-      _snprintf_s(buf, sizeof(buf), "%f", number_);
-#else
-      snprintf(buf, sizeof(buf), "%f", number_);
-#endif
+      SNPRINTF(buf, sizeof(buf), "%f", number_);
       return buf;
     }
     case string_type:    return *string_;
     case array_type:     return "array";
     case object_type:    return "object";
     default:             assert(0);
-#if _MSC_VER >= 1310 // VC 2003
+#ifdef _MSC_VER
       __assume(0);
 #endif
     }
@@ -261,7 +265,7 @@ namespace picojson {
       default:
 	if ((unsigned char)*i < 0x20 || *i == 0x7f) {
 	  char buf[7];
-	  sprintf(buf, "\\u%04x", *i & 0xff);
+	  SNPRINTF(buf, sizeof(buf), "\\u%04x", *i & 0xff);
 	  copy(buf, buf + 6, oi);
 	  } else {
 	  *oi++ = *i;
@@ -517,7 +521,7 @@ namespace picojson {
     std::string num_str;
     while (! in.eof()) {
       int ch = in.getc();
-      if ('0' <= ch && ch <= '9' || ch == '+' || ch == '-' || ch == '.'
+      if (('0' <= ch && ch <= '9') || ch == '+' || ch == '-' || ch == '.'
 	  || ch == 'e' || ch == 'E') {
 	num_str.push_back(ch);
       } else {
@@ -553,7 +557,7 @@ namespace picojson {
       int ch = in.getc();
       if (ch != -1) {
 	in.ungetc();
-	if ('0' <= ch && ch <= '9' || ch == '-') {
+	if (('0' <= ch && ch <= '9') || ch == '-') {
 	  return _parse_number(out, in);
 	}
       }
@@ -569,7 +573,7 @@ namespace picojson {
     // do
     if (! _parse(out, in)) {
       char buf[64];
-      sprintf(buf, "syntax error at line %d near: ", in.line());
+      SNPRINTF(buf, sizeof(buf), "syntax error at line %d near: ", in.line());
       err = buf;
       while (! in.eof()) {
 	int ch = in.getc();
@@ -618,9 +622,15 @@ inline std::ostream& operator<<(std::ostream& os, const picojson::value& x)
   x.serialize(std::ostream_iterator<char>(os));
   return os;
 }
+#ifdef _MSC_VER
+    #pragma warning(pop)
+#endif
 
 #endif
 #ifdef TEST_PICOJSON
+#ifdef _MSC_VER
+    #pragma warning(disable : 4127) // conditional expression is constant
+#endif
 
 using namespace std;
   
