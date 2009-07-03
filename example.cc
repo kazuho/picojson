@@ -8,6 +8,7 @@ int main(void)
   std::cin >> v;
   if (std::cin.fail()) {
     std::cerr << picojson::get_last_error() << std::endl;
+    return 1;
   }
   
   // dump json object
