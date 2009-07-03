@@ -587,17 +587,17 @@ namespace picojson {
     return parse(out, ii, std::istreambuf_iterator<char>());
   }
   
-  template <bool FALSE> struct last_error_t {
+  template <typename T> struct last_error_t {
     static std::string s;
   };
-  template <bool FALSE> std::string last_error_t<FALSE>::s;
+  template <typename T> std::string last_error_t<T>::s;
   
   inline void set_last_error(const std::string& s) {
-    last_error_t<false>::s = s;
+    last_error_t<bool>::s = s;
   }
   
   inline const std::string& get_last_error() {
-    return last_error_t<false>::s;
+    return last_error_t<bool>::s;
   }
 }
 
