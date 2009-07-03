@@ -29,6 +29,7 @@
 #define picojson_h
 
 #include <cassert>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
@@ -194,7 +195,7 @@ namespace picojson {
     case boolean_type:
       return boolean_;
     case number_type:
-      return number_;
+      return number_ != 0;
     case string_type:
       return ! string_->empty();
     default:
@@ -222,7 +223,7 @@ namespace picojson {
     case boolean_type:   return boolean_ ? "true" : "false";
     case number_type:    {
       char buf[256];
-#ifdef _MSC_VER
+#if _MSC_VER >= 1400 // VC 2005
       _snprintf_s(buf, sizeof(buf), "%f", number_);
 #else
       snprintf(buf, sizeof(buf), "%f", number_);
@@ -233,7 +234,7 @@ namespace picojson {
     case array_type:     return "array";
     case object_type:    return "object";
     default:             assert(0);
-#ifdef _MSC_VER
+#if _MSC_VER >= 1310 // VC 2003
       __assume(0);
 #endif
     }
