@@ -47,23 +47,23 @@ using namespace std;
 using namespace picojson;
 
 #ifdef _WIN32
-static char* str_to_utf8_alloc(const char* str) {
-    size_t in_len = strlen(str);
-    wchar_t* wcsdata;
-    char* mbsdata;
-    size_t mbssize, wcssize;
+static char* utf8_to_str_alloc(const char* utf8) {
+	size_t in_len = strlen(utf8);
+	wchar_t* wcsdata;
+	char* mbsdata;
+	size_t mbssize, wcssize;
 
-    wcssize = MultiByteToWideChar(GetACP(), 0, str, in_len,  NULL, 0);
-    wcsdata = (wchar_t*) malloc((wcssize + 1) * sizeof(wchar_t));
-    wcssize = MultiByteToWideChar(GetACP(), 0, str, in_len, wcsdata, wcssize + 1);
-    wcsdata[wcssize] = 0;
+	wcssize = MultiByteToWideChar(CP_UTF8, 0, utf8, in_len,  NULL, 0);
+	wcsdata = (wchar_t*) malloc((wcssize + 1) * sizeof(wchar_t));
+	wcssize = MultiByteToWideChar(CP_UTF8, 0, utf8, in_len, wcsdata, wcssize + 1);
+	wcsdata[wcssize] = 0;
 
-    mbssize = WideCharToMultiByte(CP_UTF8, 0, (LPCWSTR) wcsdata, -1, NULL, 0, NULL, NULL);
-    mbsdata = (char*) malloc((mbssize + 1));
-    mbssize = WideCharToMultiByte(CP_UTF8, 0, (LPCWSTR) wcsdata, -1, mbsdata, mbssize, NULL, NULL);
-    mbsdata[mbssize] = 0;
-    free(wcsdata);
-    return mbsdata;
+	mbssize = WideCharToMultiByte(GetACP(), 0, (LPCWSTR) wcsdata, -1, NULL, 0, NULL, NULL);
+	mbsdata = (char*) malloc((mbssize + 1));
+	mbssize = WideCharToMultiByte(GetACP(), 0, (LPCWSTR) wcsdata, -1, mbsdata, mbssize, NULL, NULL);
+	mbsdata[mbssize] = 0;
+	free(wcsdata);
+	return mbsdata;
 }
 #endif
 
