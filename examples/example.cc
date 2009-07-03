@@ -1,4 +1,4 @@
-#include "picojson.h"
+#include "../picojson.h"
 
 int main(void)
 {
