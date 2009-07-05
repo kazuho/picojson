@@ -17,9 +17,7 @@ int main(void)
 
   // accessors
   std::cout << "---- analyzing input ----" << std::endl;
-  if (v.is<picojson::undefined>()) {
-    std::cout << "input is undefined" << std::endl;
-  } else if (v.is<picojson::null>()) {
+  if (v.is<picojson::null>()) {
     std::cout << "input is null" << std::endl;
   } else if (v.is<bool>()) {
     std::cout << "input is " << (v.get<bool>() ? "true" : "false") << std::endl;
