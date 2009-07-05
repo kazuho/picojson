@@ -49,7 +49,6 @@
 namespace picojson {
   
   enum {
-    undefined_type,
     null_type,
     boolean_type,
     number_type,
@@ -57,8 +56,6 @@ namespace picojson {
     array_type,
     object_type
   };
-  
-  struct undefined {};
   
   struct null {};
   
@@ -100,7 +97,7 @@ namespace picojson {
   typedef value::array array;
   typedef value::object object;
   
-  inline value::value() : type_(undefined_type) {}
+  inline value::value() : type_(null_type) {}
   
   inline value::value(int type, bool) : type_(type) {
     switch (type) {
@@ -171,7 +168,6 @@ namespace picojson {
   template <> inline bool value::is<ctype>() const { \
     return type_ == jtype##_type;		     \
   }
-  IS(undefined, undefined)
   IS(null, null)
   IS(bool, boolean)
   IS(int, number)
@@ -197,7 +193,6 @@ namespace picojson {
   
   inline value::operator bool() const {
     switch (type_) {
-    case undefined_type:
     case null_type:
       return false;
     case boolean_type:
@@ -212,21 +207,20 @@ namespace picojson {
   }
   
   inline const value& value::get(size_t idx) const {
-    static value s_undefined;
+    static value s_null;
     assert(is<array>());
-    return idx < array_->size() ? (*array_)[idx] : s_undefined;
+    return idx < array_->size() ? (*array_)[idx] : s_null;
   }
 
   inline const value& value::get(const std::string& key) const {
-    static value s_undefined;
+    static value s_null;
     assert(is<object>());
     object::const_iterator i = object_->find(key);
-    return i != object_->end() ? i->second : s_undefined;
+    return i != object_->end() ? i->second : s_null;
   }
   
   inline std::string value::to_str() const {
     switch (type_) {
-    case undefined_type: return "undefined";
     case null_type:      return "null";
     case boolean_type:   return boolean_ ? "true" : "false";
     case number_type:    {
@@ -546,8 +540,7 @@ namespace picojson {
       } else { \
 	return false; \
       }
-      IS('u', "ndefined", value());
-      IS('n', "ull", value(null_type, false));
+      IS('n', "ull", value());
       IS('f', "alse", value(false));
       IS('t', "rue", value(true));
 #undef IS
