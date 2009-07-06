@@ -92,8 +92,8 @@ value get_json(string url, map<string, string>& postdata) {
   if (curl_easy_perform(curl) != CURLE_OK) {
     cerr << error << endl;
   } else {
-    char* ptr = mf->data;
-    string err = parse(v, ptr, mf->data + mf->size);
+    string err;
+    parse(v, mf->data, mf->data + mf->size, &err);
     if (!err.empty()) cerr << err << endl;
   }
   curl_easy_cleanup(curl);

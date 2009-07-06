@@ -60,8 +60,8 @@ main(int argc, char* argv[]) {
     cerr << error << endl;
   } else {
     value v;
-    char* ptr = mf->data;
-    string err = parse(v, ptr, mf->data + mf->size);
+    string err;
+    parse(v, mf->data, mf->data + mf->size, &err);
     if (err.empty()) {
       array arr = v.get<array>();
       array::iterator it;
