@@ -374,7 +374,7 @@ namespace picojson {
     }
   };
   
-  template<typename Iter> static int _parse_quadhex(input<Iter> &in) {
+  template<typename Iter> inline int _parse_quadhex(input<Iter> &in) {
     int uni_ch = 0, hex;
     for (int i = 0; i < 4; i++) {
       if ((hex = in.getc()) == -1) {
@@ -395,7 +395,7 @@ namespace picojson {
     return uni_ch;
   }
   
-  template<typename Iter> static bool _parse_codepoint(std::string& out, input<Iter>& in) {
+  template<typename Iter> inline bool _parse_codepoint(std::string& out, input<Iter>& in) {
     int uni_ch;
     if ((uni_ch = _parse_quadhex(in)) == -1) {
       return false;
@@ -436,7 +436,7 @@ namespace picojson {
     return true;
   }
   
-  template<typename Iter> static bool _parse_string(value& out, input<Iter>& in) {
+  template<typename Iter> inline bool _parse_string(value& out, input<Iter>& in) {
     // gcc 4.1 cannot compile if the below two lines are merged into one :-(
     out = value(string_type, false);
     std::string& s = out.get<std::string>();
@@ -477,7 +477,7 @@ namespace picojson {
     return false;
   }
   
-  template <typename Iter> static bool _parse_array(value& out, input<Iter>& in) {
+  template <typename Iter> inline bool _parse_array(value& out, input<Iter>& in) {
     out = value(array_type, false);
     array& a = out.get<array>();
     if (in.expect(']')) {
@@ -492,7 +492,7 @@ namespace picojson {
     return in.expect(']');
   }
   
-  template <typename Iter> static bool _parse_object(value& out, input<Iter>& in) {
+  template <typename Iter> inline bool _parse_object(value& out, input<Iter>& in) {
     out = value(object_type, false);
     object& o = out.get<object>();
     if (in.expect('}')) {
@@ -512,7 +512,7 @@ namespace picojson {
     return in.expect('}');
   }
   
-  template <typename Iter> static bool _parse_number(value& out, input<Iter>& in) {
+  template <typename Iter> inline bool _parse_number(value& out, input<Iter>& in) {
     std::string num_str;
     while (1) {
       int ch = in.getc();
@@ -529,7 +529,7 @@ namespace picojson {
     return endp == num_str.c_str() + num_str.size();
   }
   
-  template <typename Iter> static bool _parse(value& out, input<Iter>& in) {
+  template <typename Iter> inline bool _parse(value& out, input<Iter>& in) {
     in.skip_ws();
     int ch = in.getc();
     switch (ch) {
