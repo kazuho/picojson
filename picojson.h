@@ -75,11 +75,11 @@ namespace picojson {
   public:
     value();
     value(int type, bool);
-    value(bool b);
-    value(double n);
-    value(const std::string& s);
-    value(const array& a);
-    value(const object& o);
+    explicit value(bool b);
+    explicit value(double n);
+    explicit value(const std::string& s);
+    explicit value(const array& a);
+    explicit value(const object& o);
     ~value();
     value(const value& x);
     value& operator=(const value& x);
@@ -92,6 +92,9 @@ namespace picojson {
     std::string to_str() const;
     template <typename Iter> void serialize(Iter os) const;
     std::string serialize() const;
+
+    friend bool operator==(const value& x, const value& v);
+    friend bool operator!=(const value& x, const value& v) { return !(v==x); }
   };
   
   typedef value::array array;
@@ -525,7 +528,7 @@ namespace picojson {
       }
     }
     char* endp;
-    out = strtod(num_str.c_str(), &endp);
+    out = value(strtod(num_str.c_str(), &endp));
     return endp == num_str.c_str() + num_str.size();
   }
   
@@ -605,6 +608,39 @@ namespace picojson {
   inline const std::string& get_last_error() {
     return last_error_t<bool>::s;
   }
+
+  bool operator==(const value& x, const value& v) {
+    if (x.is<null>())
+      return v.is<null>();
+    if (x.is<bool>())
+      return v.is<bool>() && v.get<bool>() == x.get<bool>();
+    if (x.is<double>())
+      return v.is<double>() && v.get<double>() == x.get<double>();
+    if (x.is<std::string>())
+      return v.is<std::string>() && v.get<std::string>() == x.get<std::string>();
+    if (x.is<array>()) {
+      if (!v.is<array>()) return false;
+      array xa = x.get<array>();
+      array va = v.get<array>();
+      size_t l = va.size();
+      if (l != xa.size()) return false;
+      for (size_t i = 0; i < l; ++i)
+        if (va.at(i) != xa.at(i)) return false;
+      return true;
+    }
+    if (x.is<object>()) {
+     if (!v.is<object>()) return false;
+     object xo = x.get<object>();
+     object vo = v.get<object>();
+     for (object::const_iterator i = xo.begin(); i != xo.end(); ++i) {
+       if (vo.find(i->first) == vo.end()) return false;
+       if (vo.find(i->first)->second != i->second) return false;
+     }
+     return true;
+
+    }
+    return false;
+  }
 }
 
 inline std::istream& operator>>(std::istream& is, picojson::value& x)
@@ -655,9 +691,11 @@ template <typename T> void is(const T& x, const T& y, const char* name = "")
   }
 }
 
+#include <algorithm>
+
 int main(void)
 {
-  plan(57);
+  plan(61);
   
 #define TEST(in, type, cmp, serialize_test) {				\
     picojson::value v;							\
@@ -734,6 +772,56 @@ int main(void)
   TEST("\"abc\nd\"", "1 near: ");
 #undef TEST
   
+  {
+    picojson::value v1, v2;
+    const char *s;
+    string err;
+    s = "{ \"b\": true, \"a\": [1,2,\"three\"], \"d\": 2 }";
+    err = picojson::parse(v1, s, s + strlen(s));
+    s = "{ \"d\": 2.0, \"b\": true, \"a\": [1,2,\"three\"] }";
+    err = picojson::parse(v2, s, s + strlen(s));
+    ok((v1 == v2), "check == operator in deep comparison");
+  }
+
+  {
+    picojson::value v1, v2;
+    const char *s;
+    string err;
+    s = "{ \"b\": true, \"a\": [1,2,\"three\"], \"d\": 2 }";
+    err = picojson::parse(v1, s, s + strlen(s));
+    s = "{ \"d\": 2.0, \"a\": [1,\"three\"], \"b\": true }";
+    err = picojson::parse(v2, s, s + strlen(s));
+    ok((v1 != v2), "check != operator for array in deep comparison");
+  }
+
+  {
+    picojson::value v1, v2;
+    const char *s;
+    string err;
+    s = "{ \"b\": true, \"a\": [1,2,\"three\"], \"d\": 2 }";
+    err = picojson::parse(v1, s, s + strlen(s));
+    s = "{ \"d\": 2.0, \"a\": [1,2,\"three\"], \"b\": false }";
+    err = picojson::parse(v2, s, s + strlen(s));
+    ok((v1 != v2), "check != operator for object in deep comparison");
+  }
+
+  {
+    picojson::value v1, v2;
+    const char *s;
+    string err;
+    s = "{ \"b\": true, \"a\": [1,2,\"three\"], \"d\": 2 }";
+    err = picojson::parse(v1, s, s + strlen(s));
+	picojson::object& o = v1.get<picojson::object>();
+	o.erase("b");
+	picojson::array& a = o["a"].get<picojson::array>();
+	picojson::array::iterator i;
+	i = std::remove(a.begin(), a.end(), picojson::value(std::string("three")));
+	a.erase(i, a.end());
+    s = "{ \"a\": [1,2], \"d\": 2 }";
+    err = picojson::parse(v2, s, s + strlen(s));
+    ok((v1 == v2), "check erase()");
+  }
+
   return 0;
 }
 
