@@ -92,9 +92,6 @@ namespace picojson {
     std::string to_str() const;
     template <typename Iter> void serialize(Iter os) const;
     std::string serialize() const;
-
-    friend bool operator==(const value& x, const value& v);
-    friend bool operator!=(const value& x, const value& v) { return !(v==x); }
   };
   
   typedef value::array array;
@@ -609,37 +606,27 @@ namespace picojson {
     return last_error_t<bool>::s;
   }
 
-  bool operator==(const value& x, const value& v) {
+  bool operator==(const value& x, const value& y) {
     if (x.is<null>())
-      return v.is<null>();
-    if (x.is<bool>())
-      return v.is<bool>() && v.get<bool>() == x.get<bool>();
-    if (x.is<double>())
-      return v.is<double>() && v.get<double>() == x.get<double>();
-    if (x.is<std::string>())
-      return v.is<std::string>() && v.get<std::string>() == x.get<std::string>();
-    if (x.is<array>()) {
-      if (!v.is<array>()) return false;
-      array xa = x.get<array>();
-      array va = v.get<array>();
-      size_t l = va.size();
-      if (l != xa.size()) return false;
-      for (size_t i = 0; i < l; ++i)
-        if (va.at(i) != xa.at(i)) return false;
-      return true;
-    }
-    if (x.is<object>()) {
-     if (!v.is<object>()) return false;
-     object xo = x.get<object>();
-     object vo = v.get<object>();
-     for (object::const_iterator i = xo.begin(); i != xo.end(); ++i) {
-       if (vo.find(i->first) == vo.end()) return false;
-       if (vo.find(i->first)->second != i->second) return false;
-     }
-     return true;
-
-    }
+      return y.is<null>();
+#define PICOJSON_CMP(type)					\
+    if (x.is<type>())						\
+      return y.is<type>() && x.get<type>() == y.get<type>()
+    PICOJSON_CMP(bool);
+    PICOJSON_CMP(double);
+    PICOJSON_CMP(std::string);
+    PICOJSON_CMP(array);
+    PICOJSON_CMP(object);
+#undef PICOJSON_CMP
+    assert(0);
+#ifdef _MSC_VER
+    __assume(0);
+#endif
     return false;
+  }
+  
+  inline bool operator!=(const value& x, const value& y) {
+    return ! (x == y);
   }
 }
 
