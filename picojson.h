@@ -811,12 +811,12 @@ int main(void)
     string err;
     s = "{ \"b\": true, \"a\": [1,2,\"three\"], \"d\": 2 }";
     err = picojson::parse(v1, s, s + strlen(s));
-	picojson::object& o = v1.get<picojson::object>();
-	o.erase("b");
-	picojson::array& a = o["a"].get<picojson::array>();
-	picojson::array::iterator i;
-	i = std::remove(a.begin(), a.end(), picojson::value(std::string("three")));
-	a.erase(i, a.end());
+    picojson::object& o = v1.get<picojson::object>();
+    o.erase("b");
+    picojson::array& a = o["a"].get<picojson::array>();
+    picojson::array::iterator i;
+    i = std::remove(a.begin(), a.end(), picojson::value(std::string("three")));
+    a.erase(i, a.end());
     s = "{ \"a\": [1,2], \"d\": 2 }";
     err = picojson::parse(v2, s, s + strlen(s));
     ok((v1 == v2), "check erase()");
