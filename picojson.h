@@ -606,7 +606,7 @@ namespace picojson {
     return last_error_t<bool>::s;
   }
 
-  bool operator==(const value& x, const value& y) {
+  inline bool operator==(const value& x, const value& y) {
     if (x.is<null>())
       return y.is<null>();
 #define PICOJSON_CMP(type)					\
