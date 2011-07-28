@@ -29,6 +29,7 @@
 #define picojson_h
 
 #include <cassert>
+#include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -225,7 +226,8 @@ namespace picojson {
     case boolean_type:   return boolean_ ? "true" : "false";
     case number_type:    {
       char buf[256];
-      SNPRINTF(buf, sizeof(buf), "%f", number_);
+      double tmp;
+      SNPRINTF(buf, sizeof(buf), modf(number_, &tmp) == 0 ? "%.f" : "%f", number_);
       return buf;
     }
     case string_type:    return *string_;
@@ -682,7 +684,7 @@ template <typename T> void is(const T& x, const T& y, const char* name = "")
 
 int main(void)
 {
-  plan(61);
+  plan(62);
   
 #define TEST(in, type, cmp, serialize_test) {				\
     picojson::value v;							\
@@ -809,6 +811,9 @@ int main(void)
     ok((v1 == v2), "check erase()");
   }
 
+  ok(picojson::value(3.0).serialize() == "3",
+     "integral number should be serialized as a integer");
+  
   return 0;
 }
 
