@@ -600,7 +600,6 @@ namespace picojson {
       return true;
     }
     bool set_number(double f) {
-      //std::cerr << "set_number(" << f << ")" << std::endl;
       *out_ = value(f);
       return true;
     }
