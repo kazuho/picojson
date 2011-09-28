@@ -479,7 +479,9 @@ namespace picojson {
   }
   
   template <typename Context, typename Iter> inline bool _parse_array(Context& ctx, input<Iter>& in) {
-    ctx.parse_array_start();
+    if (! ctx.parse_array_start()) {
+      return false;
+    }
     if (in.expect(']')) {
       return true;
     }
@@ -494,7 +496,9 @@ namespace picojson {
   }
   
   template <typename Context, typename Iter> inline bool _parse_object(Context& ctx, input<Iter>& in) {
-    ctx.parse_object_start();
+    if (! ctx.parse_object_start()) {
+      return false;
+    }
     if (in.expect('}')) {
       return true;
     }
@@ -525,7 +529,7 @@ namespace picojson {
       }
     }
     char* endp;
-    out = value(strtod(num_str.c_str(), &endp));
+    out = strtod(num_str.c_str(), &endp);
     return endp == num_str.c_str() + num_str.size();
   }
   
@@ -534,8 +538,7 @@ namespace picojson {
     int ch = in.getc();
     switch (ch) {
 #define IS(ch, text, op) case ch: \
-      if (in.match(text)) { \
-	op; \
+      if (in.match(text) && op) { \
 	return true; \
       } else { \
 	return false; \
@@ -567,26 +570,47 @@ namespace picojson {
     return false;
   }
   
+  class deny_parse_context {
+  public:
+    bool set_null() { return false; }
+    bool set_bool(bool) { return false; }
+    bool set_number(double) { return false; }
+    template <typename Iter> bool parse_string(input<Iter>&) { return false; }
+    bool parse_array_start() { return false; }
+    template <typename Iter> bool parse_array_item(input<Iter>&, size_t) {
+      return false;
+    }
+    bool parse_object_start() { return false; }
+    template <typename Iter> bool parse_object_item(input<Iter>&, const std::string&) {
+      return false;
+    }
+  };
+  
   class default_parse_context {
   protected:
     value* out_;
   public:
     default_parse_context(value* out) : out_(out) {}
-    void set_null() {
+    bool set_null() {
       *out_ = value();
+      return true;
     }
-    void set_bool(bool b) {
+    bool set_bool(bool b) {
       *out_ = value(b);
+      return true;
     }
-    void set_number(double f) {
+    bool set_number(double f) {
+      //std::cerr << "set_number(" << f << ")" << std::endl;
       *out_ = value(f);
+      return true;
     }
     template<typename Iter> bool parse_string(input<Iter>& in) {
       *out_ = value(string_type, false);
       return _parse_string(out_->get<std::string>(), in);
     }
-    void parse_array_start() {
+    bool parse_array_start() {
       *out_ = value(array_type, false);
+      return true;
     }
     template <typename Iter> bool parse_array_item(input<Iter>& in, size_t) {
       array& a = out_->get<array>();
@@ -594,8 +618,9 @@ namespace picojson {
       default_parse_context ctx(&a.back());
       return _parse(ctx, in);
     }
-    void parse_object_start() {
+    bool parse_object_start() {
       *out_ = value(object_type, false);
+      return true;
     }
     template <typename Iter> bool parse_object_item(input<Iter>& in, const std::string& key) {
       object& o = out_->get<object>();
@@ -614,18 +639,18 @@ namespace picojson {
     };
   public:
     null_parse_context() {}
-    void set_null() {}
-    void set_bool(bool) {}
-    void set_number(double) {}
+    bool set_null() { return true; }
+    bool set_bool(bool) { return true; }
+    bool set_number(double) { return true; }
     template <typename Iter> bool parse_string(input<Iter>& in) {
       dummy_str s;
       return _parse_string(s, in);
     }
-    void parse_array_start() {}
+    bool parse_array_start() { return true; }
     template <typename Iter> bool parse_array_item(input<Iter>& in, size_t) {
       return _parse(*this, in);
     }
-    void parse_object_start() {}
+    bool parse_object_start() { return true; }
     template <typename Iter> bool parse_object_item(input<Iter>& in, const std::string& key) {
       return _parse(*this, in);
     }
@@ -741,9 +766,13 @@ static void plan(int num)
   printf("1..%d\n", num);
 }
 
+static bool success = true;
+
 static void ok(bool b, const char* name = "")
 {
   static int n = 1;
+  if (! b)
+    success = false;
   printf("%s %d - %s\n", b ? "ok" : "ng", n++, name);
 }
 
@@ -768,7 +797,7 @@ int main(void)
     string err = picojson::parse(v, s, s + strlen(s));			\
     ok(err.empty(), in " no error");					\
     ok(v.is<type>(), in " check type");					\
-    is(v.get<type>(), cmp, in " correct output");			\
+    is<type>(v.get<type>(), cmp, in " correct output");			\
     is(*s, '\0', in " read to eof");					\
     if (serialize_test) {						\
       is(v.serialize(), string(in), in " serialize");			\
@@ -819,9 +848,8 @@ int main(void)
     ok(err.empty(), "object no error");
     ok(v.is<picojson::object>(), "object check type");
     is(v.get<picojson::object>().size(), size_t(1), "check object size");
-    ok(v.get("a").is<bool>(), "check property exists");
-    is(v.get("a").get<bool>(), true,
-       "check property value");
+    ok(v.get("a").is<bool>(), "check bool property exists");
+    is(v.get("a").get<bool>(), true, "check bool property value");
     is(v.serialize(), string("{\"a\":true}"), "serialize object");
   }
 
@@ -898,7 +926,7 @@ int main(void)
     ok(err.empty(), "null_parse_context");
   }
   
-  return 0;
+  return success ? 0 : 1;
 }
 
 #endif
