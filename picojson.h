@@ -397,7 +397,7 @@ namespace picojson {
     return uni_ch;
   }
   
-  template<typename Iter> inline bool _parse_codepoint(std::string& out, input<Iter>& in) {
+  template<typename String, typename Iter> inline bool _parse_codepoint(String& out, input<Iter>& in) {
     int uni_ch;
     if ((uni_ch = _parse_quadhex(in)) == -1) {
       return false;
@@ -438,10 +438,7 @@ namespace picojson {
     return true;
   }
   
-  template<typename Iter> inline bool _parse_string(value& out, input<Iter>& in) {
-    // gcc 4.1 cannot compile if the below two lines are merged into one :-(
-    out = value(string_type, false);
-    std::string& s = out.get<std::string>();
+  template<typename String, typename Iter> inline bool _parse_string(String& out, input<Iter>& in) {
     while (1) {
       int ch = in.getc();
       if (ch < ' ') {
@@ -454,7 +451,7 @@ namespace picojson {
 	  return false;
 	}
 	switch (ch) {
-#define MAP(sym, val) case sym: s.push_back(val); break
+#define MAP(sym, val) case sym: out.push_back(val); break
 	  MAP('"', '\"');
 	  MAP('\\', '\\');
 	  MAP('/', '/');
@@ -465,7 +462,7 @@ namespace picojson {
 	  MAP('t', '\t');
 #undef MAP
 	case 'u':
-	  if (! _parse_codepoint(s, in)) {
+	  if (! _parse_codepoint(out, in)) {
 	    return false;
 	  }
 	  break;
@@ -473,48 +470,47 @@ namespace picojson {
 	  return false;
 	}
       } else {
-	s.push_back(ch);
+	out.push_back(ch);
       }
     }
     return false;
   }
   
-  template <typename Iter> inline bool _parse_array(value& out, input<Iter>& in) {
-    out = value(array_type, false);
-    array& a = out.get<array>();
+  template <typename Context, typename Iter> inline bool _parse_array(Context& ctx, input<Iter>& in) {
+    ctx.parse_array_start();
     if (in.expect(']')) {
       return true;
     }
+    size_t idx = 0;
     do {
-      a.push_back(value());
-      if (! _parse(a.back(), in)) {
+      if (! ctx.parse_array_item(in, idx)) {
 	return false;
       }
+      idx++;
     } while (in.expect(','));
     return in.expect(']');
   }
   
-  template <typename Iter> inline bool _parse_object(value& out, input<Iter>& in) {
-    out = value(object_type, false);
-    object& o = out.get<object>();
+  template <typename Context, typename Iter> inline bool _parse_object(Context& ctx, input<Iter>& in) {
+    ctx.parse_object_start();
     if (in.expect('}')) {
       return true;
     }
     do {
-      value key, val;
-      if (in.expect('"')
-	  && _parse_string(key, in)
-	  && in.expect(':')
-	  && _parse(val, in)) {
-	o[key.to_str()] = val;
-      } else {
+      std::string key;
+      if (! in.expect('"')
+	  || ! _parse_string(key, in)
+	  || ! in.expect(':')) {
+	return false;
+      }
+      if (! ctx.parse_object_item(in, key)) {
 	return false;
       }
     } while (in.expect(','));
     return in.expect('}');
   }
   
-  template <typename Iter> inline bool _parse_number(value& out, input<Iter>& in) {
+  template <typename Iter> inline bool _parse_number(double& out, input<Iter>& in) {
     std::string num_str;
     while (1) {
       int ch = in.getc();
@@ -531,37 +527,110 @@ namespace picojson {
     return endp == num_str.c_str() + num_str.size();
   }
   
-  template <typename Iter> inline bool _parse(value& out, input<Iter>& in) {
+  template <typename Context, typename Iter> inline bool _parse(Context& ctx, input<Iter>& in) {
     in.skip_ws();
     int ch = in.getc();
     switch (ch) {
-#define IS(ch, text, val) case ch: \
+#define IS(ch, text, op) case ch: \
       if (in.match(text)) { \
-	out = val; \
+	op; \
 	return true; \
       } else { \
 	return false; \
       }
-      IS('n', "ull", value());
-      IS('f', "alse", value(false));
-      IS('t', "rue", value(true));
+      IS('n', "ull", ctx.set_null());
+      IS('f', "alse", ctx.set_bool(false));
+      IS('t', "rue", ctx.set_bool(true));
 #undef IS
     case '"':
-      return _parse_string(out, in);
+      return ctx.parse_string(in);
     case '[':
-      return _parse_array(out, in);
+      return _parse_array(ctx, in);
     case '{':
-      return _parse_object(out, in);
+      return _parse_object(ctx, in);
     default:
       if (('0' <= ch && ch <= '9') || ch == '-') {
 	in.ungetc();
-	return _parse_number(out, in);
+	double f;
+	if (_parse_number(f, in)) {
+	  ctx.set_number(f);
+	  return true;
+	} else {
+	  return false;
+	}
       }
       break;
     }
     in.ungetc();
     return false;
   }
+  
+  class default_parse_context {
+  protected:
+    value* out_;
+  public:
+    default_parse_context(value* out) : out_(out) {}
+    void set_null() {
+      *out_ = value();
+    }
+    void set_bool(bool b) {
+      *out_ = value(b);
+    }
+    void set_number(double f) {
+      *out_ = value(f);
+    }
+    template<typename Iter> bool parse_string(input<Iter>& in) {
+      *out_ = value(string_type, false);
+      return _parse_string(out_->get<std::string>(), in);
+    }
+    void parse_array_start() {
+      *out_ = value(array_type, false);
+    }
+    template <typename Iter> bool parse_array_item(input<Iter>& in, size_t) {
+      array& a = out_->get<array>();
+      a.push_back(value());
+      default_parse_context ctx(&a.back());
+      return _parse(ctx, in);
+    }
+    void parse_object_start() {
+      *out_ = value(object_type, false);
+    }
+    template <typename Iter> bool parse_object_item(input<Iter>& in, const std::string& key) {
+      object& o = out_->get<object>();
+      default_parse_context ctx(&o[key]);
+      return _parse(ctx, in);
+    }
+  private:
+    default_parse_context(const default_parse_context&);
+    default_parse_context& operator=(const default_parse_context&);
+  };
+
+  class null_parse_context {
+  public:
+    struct dummy_str {
+      void push_back(int) {}
+    };
+  public:
+    null_parse_context() {}
+    void set_null() {}
+    void set_bool(bool) {}
+    void set_number(double) {}
+    template <typename Iter> bool parse_string(input<Iter>& in) {
+      dummy_str s;
+      return _parse_string(s, in);
+    }
+    void parse_array_start() {}
+    template <typename Iter> bool parse_array_item(input<Iter>& in, size_t) {
+      return _parse(*this, in);
+    }
+    void parse_object_start() {}
+    template <typename Iter> bool parse_object_item(input<Iter>& in, const std::string& key) {
+      return _parse(*this, in);
+    }
+  private:
+    null_parse_context(const null_parse_context&);
+    null_parse_context& operator=(const null_parse_context&);
+  };
   
   // obsolete, use the version below
   template <typename Iter> inline std::string parse(value& out, Iter& pos, const Iter& last) {
@@ -570,9 +639,9 @@ namespace picojson {
     return err;
   }
   
-  template <typename Iter> inline Iter parse(value& out, const Iter& first, const Iter& last, std::string* err) {
+  template <typename Context, typename Iter> inline Iter _parse(Context& ctx, const Iter& first, const Iter& last, std::string* err) {
     input<Iter> in(first, last);
-    if (! _parse(out, in) && err != NULL) {
+    if (! _parse(ctx, in) && err != NULL) {
       char buf[64];
       SNPRINTF(buf, sizeof(buf), "syntax error at line %d near: ", in.line());
       *err = buf;
@@ -586,6 +655,11 @@ namespace picojson {
       }
     }
     return in.cur();
+  }
+  
+  template <typename Iter> inline Iter parse(value& out, const Iter& first, const Iter& last, std::string* err) {
+    default_parse_context ctx(&out);
+    return _parse(ctx, first, last, err);
   }
   
   inline std::string parse(value& out, std::istream& is) {
@@ -813,6 +887,14 @@ int main(void)
 
   ok(picojson::value(3.0).serialize() == "3",
      "integral number should be serialized as a integer");
+  
+  {
+    const char* s = "{ \"a\": [1,2], \"d\": 2 }";
+    picojson::null_parse_context ctx;
+    string err;
+    picojson::_parse(ctx, s, s + strlen(s), &err);
+    ok(err.empty(), "null_parse_context");
+  }
   
   return 0;
 }
