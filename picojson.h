@@ -180,12 +180,16 @@ namespace picojson {
   IS(object, object)
 #undef IS
   
-#define GET(ctype, var)					      \
-  template <> inline const ctype& value::get<ctype>() const { \
-    return var;						      \
-  }							      \
-  template <> inline ctype& value::get<ctype>() {	      \
-    return var;						      \
+#define GET(ctype, var)						\
+  template <> inline const ctype& value::get<ctype>() const {	\
+    assert("type mismatch! call vis<type>() before get<type>()" \
+	   && is<ctype>());				        \
+    return var;							\
+  }								\
+  template <> inline ctype& value::get<ctype>() {		\
+    assert("type mismatch! call is<type>() before get<type>()"	\
+	   && is<ctype>());					\
+    return var;							\
   }
   GET(bool, boolean_)
   GET(double, number_)
