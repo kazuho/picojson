@@ -114,6 +114,8 @@ if (! v.is&lt;picojson::object&gt;()) {
   std::cerr &lt;&lt; "JSON is not an object" &lt;&lt; std::endl;
   exit(2);
 }
+
+// obtain a const reference to the map, and print the contents
 const picojson::value::object& obj = v.get&lt;picojson::object&gt;();
 for (picojson::value::object::const_iterator i = obj.begin();
      i != obj.end();
