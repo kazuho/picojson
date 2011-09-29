@@ -86,7 +86,38 @@ namespace picojson {
     object& get&lt;array&gt;();                  // non-const accessor (usable only if the object is an array)
 
     operator bool() const;                 // evaluates the object as a boolean
+
+    std::string serialize() const;         // returns the object in JSON representation
+
+    std::string to_str() const;            // returns the object in string (for casual use)
+
   };
 
+}
+</pre>
+
+The code below parses a JSON string and prints the contents of the object.
+
+<pre>
+picojson::value v;
+
+// parse the input
+std::cin &gt;&gt; v;
+std::string err = picojson::get_last_error();
+if (! err.empty()) {
+  std::cerr &lt;&lt; err &lt;&lt; std::endl;
+  exit(1);
+}
+
+// check if the type of the value is "object"
+if (! v.is&lt;picojson::object&gt;()) {
+  std::cerr &lt;&lt; "JSON is not an object" &lt;&lt; std::endl;
+  exit(2);
+}
+const picojson::value::object& obj = v.get&lt;picojson::object&gt;();
+for (picojson::value::object::const_iterator i = obj.begin();
+     i != obj.end();
+     ++i) {
+  std::cout &lt;&lt; i-&gt;first &lt;&lt; ': ' &lt;&lt; i-&gt;second.to_str() &lt;&lt; std::endl;
 }
 </pre>
