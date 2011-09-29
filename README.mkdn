@@ -124,4 +124,4 @@ for (picojson::value::object::const_iterator i = obj.begin();
 }
 </pre>
 
-Please note that the type check is mandatory; do not forget to check the type of the object by calling is<type>() before accessing the value by calling get<type>().
+Please note that the type check is mandatory; do not forget to check the type of the object by calling is&lt;type&gt;() before accessing the value by calling get&lt;type&gt;().
