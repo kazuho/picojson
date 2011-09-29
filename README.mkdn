@@ -160,3 +160,6 @@ picojson::value v;
 v.serialize(std::ostream_iterator(std::cout));
 </pre>
 
+## Further reading
+
+Examples can be found in the <i>examples</i> directory.
