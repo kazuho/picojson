@@ -89,7 +89,7 @@ namespace picojson {
     template <typename T> bool is() const;
     template <typename T> const T& get() const;
     template <typename T> T& get();
-    operator bool() const;
+    bool evaluate_as_boolean() const;
     const value& get(size_t idx) const;
     const value& get(const std::string& key) const;
     std::string to_str() const;
@@ -198,7 +198,7 @@ namespace picojson {
   GET(object, *object_)
 #undef GET
   
-  inline value::operator bool() const {
+  inline bool value::evaluate_as_boolean() const {
     switch (type_) {
     case null_type:
       return false;

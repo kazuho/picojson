@@ -88,7 +88,7 @@ namespace picojson {
     const object& get&lt;object&gt;() const;     // const accessor (usable only if the object is an object)
     object& get&lt;array&gt;();                  // non-const accessor (usable only if the object is an array)
 
-    operator bool() const;                 // evaluates the object as a boolean
+    bool evaluate_as_boolean() const;            // evaluates the object as a boolean
 
     std::string serialize() const;         // returns the object in JSON representation
     template<typename Iter> void serialize(Iter os) const;
