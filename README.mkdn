@@ -123,3 +123,5 @@ for (picojson::value::object::const_iterator i = obj.begin();
   std::cout &lt;&lt; i-&gt;first &lt;&lt; ': ' &lt;&lt; i-&gt;second.to_str() &lt;&lt; std::endl;
 }
 </pre>
+
+Please note that the type check is mandatory; do not forget to check the type of the object by calling is<type>() before accessing the value by calling get<type>().
