@@ -1,0 +1,45 @@
+# PicoJSON - a C++ JSON parser / serializer
+
+## Blurbs
+
+- header-file only
+- no dependencies (only uses standard C++ libraries)
+- STL-frendly (arrays are represented by using std::vector, objects are std::map)
+- provides both pull interface and streaming (event-based) interface
+
+## Reading JSON using the pull interface
+
+There are various ways to use the pull (DOM-like) interface of picojson.
+
+<pre>
+picojson::value v;
+std::cin &gt;&gt; v;
+std::string err = picojson::get_last_error();
+if (! err.empty()) {
+  std::cerr &lt;&lt; err &lt;&lt; std::endl;
+}
+</pre>
+
+<pre>
+std::istream_iterator input(cin);
+picojson::value v;
+std::string err;
+input = picojson::parse(v, input, std::istream_iterator(), &err);
+if (! err.empty()) {
+  std::cerr &lt;&lt; err &lt;&lt; std::endl;
+}
+</pre>
+
+<pre>
+const char* json = "{\"a\":1}";
+picojson::value v;
+std::string err;
+picojson::parse(v, json, json + strlen(json), &err);
+if (! err.empty()) {
+  std::cerr &lt;&lt; err &lt;&lt; std::endl;
+}
+</pre>
+
+## Accessing the values
+
+...
