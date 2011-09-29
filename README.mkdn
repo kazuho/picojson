@@ -68,26 +68,26 @@ namespace picojson {
     explicit value(const array& a);        // create an array object
     explicit value(const object& o);       // create an "object"
 
-    bool is&lt;picojson::null&gt;() const;       // if the object is "null"
+    bool is&lt;picojson::null&gt;() const;       // check if the object is "null"
 
-    bool is&lt;bool&gt;() const;                 // if the object is a boolean
+    bool is&lt;bool&gt;() const;                 // check if the object is a boolean
     const bool& get&lt;bool&gt;() const;         // const accessor (usable only if the object is a boolean)
     bool& get&lt;bool&gt;();                     // non-const accessor (usable only if the object is a boolean)
 
-    bool is&lt;double&gt;() const;               // if the object is a number
+    bool is&lt;double&gt;() const;               // check if the object is a number
     const double& get&lt;double&gt;() const;     // const accessor (usable only if the object is a number)
     double& get&lt;double&gt;();                 // non-const accessor (usable only if the object is a number)
 
-    bool is&lt;std::string&gt;() const;          // if the object is a string
+    bool is&lt;std::string&gt;() const;          // check if the object is a string
     const std::string& get&lt;std::string&gt;() const;
                                            // const accessor (usable only if the object is a string)
     std::string& get&lt;std::string&gt;();       // non-const accessor (usable only if the object is a string)
 
-    bool is&lt;array&gt;() const;                // if the object is an array
+    bool is&lt;array&gt;() const;                // check if the object is an array
     const array& get&lt;array&gt;() const;       // const accessor (usable only if the object is an array)
     array& get&lt;array&gt;();                   // non-const accessor (usable only if the object is an array)
 
-    bool is&lt;object&gt;() const;               // if the object is an "object"
+    bool is&lt;object&gt;() const;               // check if the object is an "object"
     const object& get&lt;object&gt;() const;     // const accessor (usable only if the object is an object)
     object& get&lt;object&gt;();                 // non-const accessor (usable only if the object is an array)
 
