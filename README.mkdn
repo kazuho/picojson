@@ -1,5 +1,8 @@
 # PicoJSON - a C++ JSON parser / serializer
 
+- Copyright 2009-2010 Cybozu Labs, Inc.
+- Copyright 2011 Kazuho Oku
+
 ## Introduction
 
 PicoJSON is a tiny JSON parser / serializer for C++ with following properties:
