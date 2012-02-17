@@ -654,7 +654,7 @@ namespace picojson {
       return _parse(*this, in);
     }
     bool parse_object_start() { return true; }
-    template <typename Iter> bool parse_object_item(input<Iter>& in, const std::string& key) {
+    template <typename Iter> bool parse_object_item(input<Iter>& in, const std::string&) {
       return _parse(*this, in);
     }
   private:
