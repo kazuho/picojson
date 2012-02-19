@@ -81,6 +81,7 @@ namespace picojson {
     explicit value(bool b);
     explicit value(double n);
     explicit value(const std::string& s);
+    explicit value(const char* s);
     explicit value(const array& a);
     explicit value(const object& o);
     ~value();
@@ -126,7 +127,11 @@ namespace picojson {
   inline value::value(const std::string& s) : type_(string_type) {
     string_ = new std::string(s);
   }
-  
+
+  inline value::value(const char* s) : type_(string_type) {
+    string_ = new std::string(s);
+  }
+
   inline value::value(const array& a) : type_(array_type) {
     array_ = new array(a);
   }
@@ -793,7 +798,19 @@ template <typename T> void is(const T& x, const T& y, const char* name = "")
 
 int main(void)
 {
-  plan(62);
+  plan(68);
+
+    // constructors
+#define TEST(expr, expected) \
+    is(picojson::value(expr).serialize(), string(expected), "picojson::value(" #expr ")")
+
+    TEST(true,  "true");
+    TEST(false, "false");
+    TEST(42.0,   "42");
+    TEST(string("hello"), "\"hello\"");
+    TEST("hello", "\"hello\"");
+
+#undef TEST
   
 #define TEST(in, type, cmp, serialize_test) {				\
     picojson::value v;							\
