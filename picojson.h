@@ -788,7 +788,7 @@ static void ok(bool b, const char* name = "")
   static int n = 1;
   if (! b)
     success = false;
-  printf("%s %d - %s\n", b ? "ok" : "ng", n++, name);
+  printf("%s %d - %s\n", b ? "ok" : "not ok", n++, name);
 }
 
 template <typename T> void is(const T& x, const T& y, const char* name = "")
@@ -797,6 +797,7 @@ template <typename T> void is(const T& x, const T& y, const char* name = "")
     ok(true, name);
   } else {
     ok(false, name);
+    std::cout << "# got [" << x << "]" << std::endl;
   }
 }
 
