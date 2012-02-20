@@ -95,6 +95,8 @@ namespace picojson {
     std::string to_str() const;
     template <typename Iter> void serialize(Iter os) const;
     std::string serialize() const;
+  private:
+    template <typename T> value(const T*); // intentionally defined to block implicit conversion of pointer to bool
   };
   
   typedef value::array array;
