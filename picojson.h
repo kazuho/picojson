@@ -804,7 +804,20 @@ template <typename T> void is(const T& x, const T& y, const char* name = "")
 
 int main(void)
 {
-  plan(65);
+  plan(69);
+
+  // constructors
+#define TEST(expr, expected) \
+    is(picojson::value expr .serialize(), string(expected), "picojson::value" #expr)
+  
+  TEST( (true),  "true");
+  TEST( (false), "false");
+  TEST( (42.0),   "42");
+  TEST( (string("hello")), "\"hello\"");
+  TEST( ("hello"), "\"hello\"");
+  TEST( ("hello", 4), "\"hell\"");
+  
+#undef TEST
   
 #define TEST(in, type, cmp, serialize_test) {				\
     picojson::value v;							\
@@ -932,7 +945,6 @@ int main(void)
 
   ok(picojson::value(3.0).serialize() == "3",
      "integral number should be serialized as a integer");
-  picojson::value("abcd");
   
   {
     const char* s = "{ \"a\": [1,2], \"d\": 2 }";
@@ -941,9 +953,6 @@ int main(void)
     picojson::_parse(ctx, s, s + strlen(s), &err);
     ok(err.empty(), "null_parse_context");
   }
-  
-  is(picojson::value("abc").serialize(), std::string("\"abc\""), "value(const char*)");
-  is(picojson::value("abc", 1).serialize(), std::string("\"a\""), "value(const char*, size_t)");
   
   return success ? 0 : 1;
 }
