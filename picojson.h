@@ -83,6 +83,8 @@ namespace picojson {
     explicit value(const std::string& s);
     explicit value(const array& a);
     explicit value(const object& o);
+    explicit value(const char* s);
+    value(const char* s, size_t len);
     ~value();
     value(const value& x);
     value& operator=(const value& x);
@@ -135,6 +137,14 @@ namespace picojson {
   
   inline value::value(const object& o) : type_(object_type) {
     object_ = new object(o);
+  }
+  
+  inline value::value(const char* s) : type_(string_type) {
+    string_ = new std::string(s);
+  }
+  
+  inline value::value(const char* s, size_t len) : type_(string_type) {
+    string_ = new std::string(s, len);
   }
   
   inline value::~value() {
@@ -794,7 +804,7 @@ template <typename T> void is(const T& x, const T& y, const char* name = "")
 
 int main(void)
 {
-  plan(62);
+  plan(65);
   
 #define TEST(in, type, cmp, serialize_test) {				\
     picojson::value v;							\
@@ -922,6 +932,7 @@ int main(void)
 
   ok(picojson::value(3.0).serialize() == "3",
      "integral number should be serialized as a integer");
+  picojson::value("abcd");
   
   {
     const char* s = "{ \"a\": [1,2], \"d\": 2 }";
@@ -930,6 +941,9 @@ int main(void)
     picojson::_parse(ctx, s, s + strlen(s), &err);
     ok(err.empty(), "null_parse_context");
   }
+  
+  is(picojson::value("abc").serialize(), std::string("\"abc\""), "value(const char*)");
+  is(picojson::value("abc", 1).serialize(), std::string("\"a\""), "value(const char*, size_t)");
   
   return success ? 0 : 1;
 }
