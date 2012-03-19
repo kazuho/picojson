@@ -94,6 +94,8 @@ namespace picojson {
     bool evaluate_as_boolean() const;
     const value& get(size_t idx) const;
     const value& get(const std::string& key) const;
+    bool contains(size_t idx) const;
+    bool contains(const std::string& key) const;
     std::string to_str() const;
     template <typename Iter> void serialize(Iter os) const;
     std::string serialize() const;
@@ -236,6 +238,17 @@ namespace picojson {
     assert(is<object>());
     object::const_iterator i = object_->find(key);
     return i != object_->end() ? i->second : s_null;
+  }
+
+  inline bool value::contains(size_t idx) const {
+    assert(is<array>());
+    return idx < array_->size();
+  }
+
+  inline bool value::contains(const std::string& key) const {
+    assert(is<object>());
+    object::const_iterator i = object_->find(key);
+    return i != object_->end();
   }
   
   inline std::string value::to_str() const {
@@ -804,7 +817,7 @@ template <typename T> void is(const T& x, const T& y, const char* name = "")
 
 int main(void)
 {
-  plan(69);
+  plan(75);
 
   // constructors
 #define TEST(expr, expected) \
@@ -861,12 +874,16 @@ int main(void)
     ok(err.empty(), "array no error");
     ok(v.is<picojson::array>(), "array check type");
     is(v.get<picojson::array>().size(), size_t(3), "check array size");
+    ok(v.contains(0), "check contains array[0]");
     ok(v.get(0).is<double>(), "check array[0] type");
     is(v.get(0).get<double>(), 1.0, "check array[0] value");
+    ok(v.contains(1), "check contains array[1]");
     ok(v.get(1).is<bool>(), "check array[1] type");
     ok(v.get(1).get<bool>(), "check array[1] value");
+    ok(v.contains(2), "check contains array[2]");
     ok(v.get(2).is<string>(), "check array[2] type");
     is(v.get(2).get<string>(), string("hello"), "check array[2] value");
+    ok(!v.contains(3), "check not contains array[3]");
   }
   
   {
@@ -876,9 +893,11 @@ int main(void)
     ok(err.empty(), "object no error");
     ok(v.is<picojson::object>(), "object check type");
     is(v.get<picojson::object>().size(), size_t(1), "check object size");
+    ok(v.contains("a"), "check contains property");
     ok(v.get("a").is<bool>(), "check bool property exists");
     is(v.get("a").get<bool>(), true, "check bool property value");
     is(v.serialize(), string("{\"a\":true}"), "serialize object");
+    ok(!v.contains("z"), "check not contains property");
   }
 
 #define TEST(json, msg) do {				\
