@@ -258,7 +258,7 @@ namespace picojson {
     case number_type:    {
       char buf[256];
       double tmp;
-      SNPRINTF(buf, sizeof(buf), modf(number_, &tmp) == 0 ? "%.f" : "%f", number_);
+      SNPRINTF(buf, sizeof(buf), fabs(number_) < (1ULL << 53) && modf(number_, &tmp) == 0 ? "%.f" : "%.17g", number_);
       return buf;
     }
     case string_type:    return *string_;
@@ -814,6 +814,8 @@ template <typename T> void is(const T& x, const T& y, const char* name = "")
 }
 
 #include <algorithm>
+#include <sstream>
+#include <limits.h>
 
 int main(void)
 {
@@ -829,6 +831,22 @@ int main(void)
   TEST( (string("hello")), "\"hello\"");
   TEST( ("hello"), "\"hello\"");
   TEST( ("hello", 4), "\"hell\"");
+
+  {
+    double a = 1;
+    for (int i = 0; i < 1024; i++) {
+      picojson::value vi(a);
+      std::stringstream ss;
+      ss << vi;
+      picojson::value vo;
+      ss >> vo;
+      double b = vo.get<double>();
+      if ((i < 53 && a != b) || fabs(a - b) / b > 1e-8) {
+        printf("ng i=%d a=%.18e b=%.18e\n", i, a, b);
+      }
+      a *= 2;
+    }
+  }
   
 #undef TEST
   
@@ -847,6 +865,7 @@ int main(void)
   TEST("false", bool, false, true);
   TEST("true", bool, true, true);
   TEST("90.5", double, 90.5, false);
+  TEST("1.7976931348623157e+308", double, DBL_MAX, false);
   TEST("\"hello\"", string, string("hello"), true);
   TEST("\"\\\"\\\\\\/\\b\\f\\n\\r\\t\"", string, string("\"\\/\b\f\n\r\t"),
        true);
