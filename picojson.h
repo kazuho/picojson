@@ -378,7 +378,7 @@ namespace picojson {
     Iter cur() const { return cur_; }
     int line() const { return line_; }
     void skip_ws() {
-      while (1) {
+      for (;;) {
 	int ch = getc();
 	if (! (ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r')) {
 	  ungetc();
@@ -470,7 +470,7 @@ namespace picojson {
   }
   
   template<typename String, typename Iter> inline bool _parse_string(String& out, input<Iter>& in) {
-    while (1) {
+    for (;;) {
       int ch = in.getc();
       if (ch < ' ') {
 	in.ungetc();
@@ -547,7 +547,7 @@ namespace picojson {
   
   template <typename Iter> inline bool _parse_number(double& out, input<Iter>& in) {
     std::string num_str;
-    while (1) {
+    for (;;) {
       int ch = in.getc();
       if (('0' <= ch && ch <= '9') || ch == '+' || ch == '-' || ch == '.'
 	  || ch == 'e' || ch == 'E') {
@@ -700,7 +700,7 @@ namespace picojson {
       char buf[64];
       SNPRINTF(buf, sizeof(buf), "syntax error at line %d near: ", in.line());
       *err = buf;
-      while (1) {
+      for (;;) {
 	int ch = in.getc();
 	if (ch == -1 || ch == '\n') {
 	  break;
