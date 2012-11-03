@@ -91,9 +91,21 @@ namespace picojson {
     template <typename T> bool is() const;
     template <typename T> const T& get() const;
     template <typename T> T& get();
+    operator bool&();
+    operator double&();
+    operator std::string&();
+    operator array&();
+    operator object&();
+    operator const bool&() const;
+    operator const double&() const;
+    operator const std::string&() const;
+    operator const array&() const;
+    operator const object&() const;
     bool evaluate_as_boolean() const;
+    value& operator[](int idx);
     value& operator[](size_t idx);
     value& operator[](const std::string& key);
+    value& operator[](const char* key);
     const value& get(size_t idx) const;
     const value& get(const std::string& key) const;
     bool contains(size_t idx) const;
@@ -217,6 +229,30 @@ namespace picojson {
   GET(object, *object_)
 #undef GET
   
+#define REF_CAST_OPERATOR(ctype, var) \
+  inline value::operator ctype&() { \
+    assert(is<ctype>()); \
+    return var; \
+  }
+  REF_CAST_OPERATOR(bool, boolean_)
+  REF_CAST_OPERATOR(double, number_)
+  REF_CAST_OPERATOR(std::string, *string_)
+  REF_CAST_OPERATOR(array, *array_)
+  REF_CAST_OPERATOR(object, *object_)
+#undef REF_CAST_OPERATOR
+  
+#define CONST_REF_CAST_OPERATOR(ctype, var) \
+  inline value::operator const ctype&() const { \
+    assert(is<ctype>()); \
+    return var; \
+  }
+  CONST_REF_CAST_OPERATOR(bool, boolean_)
+  CONST_REF_CAST_OPERATOR(double, number_)
+  CONST_REF_CAST_OPERATOR(std::string, *string_)
+  CONST_REF_CAST_OPERATOR(array, *array_)
+  CONST_REF_CAST_OPERATOR(object, *object_)
+#undef CONST_REF_CAST_OPERATOR
+  
   inline bool value::evaluate_as_boolean() const {
     switch (type_) {
     case null_type:
@@ -232,6 +268,10 @@ namespace picojson {
     }
   }
   
+  inline value& value::operator[](int idx) {
+    return operator[](static_cast<size_t>(idx));
+  }
+
   inline value& value::operator[](size_t idx) {
     static value s_null;
     assert(is<array>());
@@ -243,6 +283,10 @@ namespace picojson {
     assert(is<object>());
     object::iterator i = object_->find(key);
     return i != object_->end() ? i->second : s_null;
+  }
+
+  inline value& value::operator[](const char* key) {
+    return operator[](std::string(key));
   }
 
   inline const value& value::get(size_t idx) const {
@@ -677,14 +721,14 @@ namespace picojson {
     }
     template<typename Iter> bool parse_string(input<Iter>& in) {
       *out_ = value(string_type, false);
-      return _parse_string(out_->get<std::string>(), in);
+      return _parse_string((std::string&)*out_, in);
     }
     bool parse_array_start() {
       *out_ = value(array_type, false);
       return true;
     }
     template <typename Iter> bool parse_array_item(input<Iter>& in, size_t) {
-      array& a = out_->get<array>();
+      array& a = *out_;
       a.push_back(value());
       default_parse_context ctx(&a.back());
       return _parse(ctx, in);
@@ -694,7 +738,7 @@ namespace picojson {
       return true;
     }
     template <typename Iter> bool parse_object_item(input<Iter>& in, const std::string& key) {
-      object& o = out_->get<object>();
+      object& o = *out_;
       default_parse_context ctx(&o[key]);
       return _parse(ctx, in);
     }
@@ -785,7 +829,7 @@ namespace picojson {
       return y.is<null>();
 #define PICOJSON_CMP(type)					\
     if (x.is<type>())						\
-      return y.is<type>() && x.get<type>() == y.get<type>()
+      return y.is<type>() && (const type&)x == (const type&)y
     PICOJSON_CMP(bool);
     PICOJSON_CMP(double);
     PICOJSON_CMP(std::string);
@@ -883,7 +927,7 @@ int main(void)
       ss << vi;
       picojson::value vo;
       ss >> vo;
-      double b = vo.get<double>();
+      double b = vo;
       if ((i < 53 && a != b) || fabs(a - b) / b > 1e-8) {
         printf("ng i=%d a=%.18e b=%.18e\n", i, a, b);
       }
@@ -899,7 +943,7 @@ int main(void)
     string err = picojson::parse(v, s, s + strlen(s));			\
     ok(err.empty(), in " no error");					\
     ok(v.is<type>(), in " check type");					\
-    is<type>(v.get<type>(), cmp, in " correct output");			\
+    is<type>((type)v, cmp, in " correct output");			\
     is(*s, '\0', in " read to eof");					\
     if (serialize_test) {						\
       is(v.serialize(), string(in), in " serialize");			\
@@ -923,7 +967,7 @@ int main(void)
     string err = picojson::parse(v, s, s + strlen(s));		       \
     ok(err.empty(), "empty " #type " no error");		       \
     ok(v.is<picojson::type>(), "empty " #type " check type");	       \
-    ok(v.get<picojson::type>().empty(), "check " #type " array size"); \
+    ok(v.empty(), "check " #type " array size"); \
   }
   TEST(array, "[]");
   TEST(object, "{}");
@@ -935,16 +979,16 @@ int main(void)
     string err = picojson::parse(v, s, s + strlen(s));
     ok(err.empty(), "array no error");
     ok(v.is<picojson::array>(), "array check type");
-    is(v.get<picojson::array>().size(), size_t(3), "check array size");
+    is(((picojson::array&)v).size(), size_t(3), "check array size");
     ok(v.contains(0), "check contains array[0]");
-    ok(v.get(0).is<double>(), "check array[0] type");
-    is(v.get(0).get<double>(), 1.0, "check array[0] value");
+    ok(v[0].is<double>(), "check array[0] type");
+    is((double)v[0], 1.0, "check array[0] value");
     ok(v.contains(1), "check contains array[1]");
-    ok(v.get(1).is<bool>(), "check array[1] type");
-    ok(v.get(1).get<bool>(), "check array[1] value");
+    ok(v[1].is<bool>(), "check array[1] type");
+    ok((bool)v[1], "check array[1] value");
     ok(v.contains(2), "check contains array[2]");
-    ok(v.get(2).is<string>(), "check array[2] type");
-    is(v.get(2).get<string>(), string("hello"), "check array[2] value");
+    ok(v[2].is<string>(), "check array[2] type");
+    is((string&)v[2], string("hello"), "check array[2] value");
     ok(!v.contains(3), "check not contains array[3]");
   }
   
@@ -954,10 +998,10 @@ int main(void)
     string err = picojson::parse(v, s, s + strlen(s));
     ok(err.empty(), "object no error");
     ok(v.is<picojson::object>(), "object check type");
-    is(v.get<picojson::object>().size(), size_t(1), "check object size");
+    is(((picojson::object)v).size(), size_t(1), "check object size");
     ok(v.contains("a"), "check contains property");
-    ok(v.get("a").is<bool>(), "check bool property exists");
-    is(v.get("a").get<bool>(), true, "check bool property value");
+    ok(v["a"].is<bool>(), "check bool property exists");
+    is((bool)v["a"], true, "check bool property value");
     is(v.serialize(), string("{\"a\":true}"), "serialize object");
     ok(!v.contains("z"), "check not contains property");
   }
@@ -1013,9 +1057,9 @@ int main(void)
     string err;
     s = "{ \"b\": true, \"a\": [1,2,\"three\"], \"d\": 2 }";
     err = picojson::parse(v1, s, s + strlen(s));
-    picojson::object& o = v1.get<picojson::object>();
+    picojson::object& o = v1;
     o.erase("b");
-    picojson::array& a = o["a"].get<picojson::array>();
+    picojson::array& a = o["a"];
     picojson::array::iterator i;
     i = std::remove(a.begin(), a.end(), picojson::value(std::string("three")));
     a.erase(i, a.end());
