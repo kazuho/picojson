@@ -98,6 +98,8 @@ namespace picojson {
     const value& get(const std::string& key) const;
     bool contains(size_t idx) const;
     bool contains(const std::string& key) const;
+    template <typename T> void insert(const std::string& key, T val);
+    template <typename T> void push(T val);
     std::string to_str() const;
     template <typename Iter> void serialize(Iter os) const;
     std::string serialize() const;
@@ -266,6 +268,26 @@ namespace picojson {
     return i != object_->end();
   }
   
+  // insert to object
+  template <typename T> inline void value::insert(const std::string& key, T val) {
+    insert(key, value(val));
+  }
+
+  template <> inline void value::insert<value>(const std::string& key, value val) {
+    assert(is<object>());
+    (*object_)[key] = val;
+  }
+
+  // push to array
+  template <typename T> inline void value::push(T val) {
+    push(value(val));
+  }
+
+  template <> inline void value::push(value val) {
+    assert(is<array>());
+    array_->push_back(val);
+  }
+
   inline std::string value::to_str() const {
     switch (type_) {
     case null_type:      return "null";
@@ -1007,6 +1029,21 @@ int main(void)
     ok(err.empty(), "null_parse_context");
   }
   
+  {
+    picojson::value v1, v2(picojson::object_type, true);
+    const char *s;
+    string err;
+    s = "{ \"b\": true, \"a\": [1,-2,\"three\"], \"d\": 2e+0 }";
+    err = picojson::parse(v1, s, s + strlen(s));
+    v2.insert("d", 2.0);
+    v2.insert("a", picojson::value(picojson::array_type, true));
+    v2["a"].push(1.0);
+    v2["a"].push(-2.0);
+    v2["a"].push("three");
+    v2.insert("b", true);
+    ok((v1 == v2), "check insert/push");
+  }
+
   return success ? 0 : 1;
 }
 
