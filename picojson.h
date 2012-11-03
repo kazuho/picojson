@@ -100,6 +100,7 @@ namespace picojson {
     bool contains(const std::string& key) const;
     template <typename T> void insert(const std::string& key, T val);
     template <typename T> void push(T val);
+    bool empty() const;
     std::string to_str() const;
     template <typename Iter> void serialize(Iter os) const;
     std::string serialize() const;
@@ -286,6 +287,11 @@ namespace picojson {
   template <> inline void value::push(value val) {
     assert(is<array>());
     array_->push_back(val);
+  }
+
+  inline bool value::empty() const {
+    assert(is<object>() || is<array>());
+    return is<object>() ? object_->empty() : array_->empty();
   }
 
   inline std::string value::to_str() const {
@@ -1042,6 +1048,13 @@ int main(void)
     v2["a"].push("three");
     v2.insert("b", true);
     ok((v1 == v2), "check insert/push");
+  }
+
+  {
+    picojson::value v1(picojson::object_type, true);
+    ok(v1.empty(), "check object empty()");
+    picojson::value v2(picojson::array_type, true);
+    ok(v2.empty(), "check array empty()");
   }
 
   return success ? 0 : 1;
