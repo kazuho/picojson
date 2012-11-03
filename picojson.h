@@ -92,6 +92,8 @@ namespace picojson {
     template <typename T> const T& get() const;
     template <typename T> T& get();
     bool evaluate_as_boolean() const;
+    value& operator[](size_t idx);
+    value& operator[](const std::string& key);
     const value& get(size_t idx) const;
     const value& get(const std::string& key) const;
     bool contains(size_t idx) const;
@@ -227,6 +229,19 @@ namespace picojson {
     }
   }
   
+  inline value& value::operator[](size_t idx) {
+    static value s_null;
+    assert(is<array>());
+    return idx < array_->size() ? (*array_)[idx] : s_null;
+  }
+
+  inline value& value::operator[](const std::string& key) {
+    static value s_null;
+    assert(is<object>());
+    object::iterator i = object_->find(key);
+    return i != object_->end() ? i->second : s_null;
+  }
+
   inline const value& value::get(size_t idx) const {
     static value s_null;
     assert(is<array>());
