@@ -35,6 +35,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <algorithm>
 #include <iostream>
 #include <iterator>
 #include <map>
@@ -74,6 +75,13 @@ namespace picojson {
       std::string* string_;
       array* array_;
       object* object_;
+      union {
+        bool boolean_;
+        double number_;
+        std::string* string_;
+        array* array_;
+        object* object_;
+      } storage_;
     };
   public:
     value();
@@ -88,6 +96,7 @@ namespace picojson {
     ~value();
     value(const value& x);
     value& operator=(const value& x);
+    void swap(value& x);
     template <typename T> bool is() const;
     template <typename T> const T& get() const;
     template <typename T> T& get();
@@ -175,12 +184,16 @@ namespace picojson {
   
   inline value& value::operator=(const value& x) {
     if (this != &x) {
-      this->~value();
-      new (this) value(x);
+      value tmp(x);
+      tmp.swap(*this);
     }
     return *this;
   }
-  
+
+  inline void value::swap(value& x) {
+    std::swap(type_, x.type_);
+    std::swap(storage_, x.storage_);
+  }
 #define IS(ctype, jtype)			     \
   template <> inline bool value::is<ctype>() const { \
     return type_ == jtype##_type;		     \
@@ -759,6 +772,10 @@ namespace picojson {
   inline bool operator!=(const value& x, const value& y) {
     return ! (x == y);
   }
+
+  inline void swap(value& x, value& y) {
+    x.swap(y);
+  }
 }
 
 inline std::istream& operator>>(std::istream& is, picojson::value& x)
@@ -777,6 +794,14 @@ inline std::ostream& operator<<(std::ostream& os, const picojson::value& x)
   x.serialize(std::ostream_iterator<char>(os));
   return os;
 }
+
+namespace std {
+  template <>
+  void swap(picojson::value& x, picojson::value& y) {
+    x.swap(y);
+  }
+}
+
 #ifdef _MSC_VER
     #pragma warning(pop)
 #endif
@@ -813,13 +838,12 @@ template <typename T> void is(const T& x, const T& y, const char* name = "")
   }
 }
 
-#include <algorithm>
 #include <sstream>
 #include <limits.h>
 
 int main(void)
 {
-  plan(75);
+  plan(85);
 
   // constructors
 #define TEST(expr, expected) \
@@ -991,7 +1015,27 @@ int main(void)
     picojson::_parse(ctx, s, s + strlen(s), &err);
     ok(err.empty(), "null_parse_context");
   }
-  
+
+  {
+    picojson::value v1, v2;
+    v1 = picojson::value(true);
+    swap(v1, v2);
+    ok(v1.is<picojson::null>(), "swap (null)");
+    ok(v2.get<bool>() == true, "swap (bool)");
+
+    v1 = picojson::value("a");
+    v2 = picojson::value(1.0);
+    swap(v1, v2);
+    ok(v1.get<double>() == 1.0, "swap (dobule)");
+    ok(v2.get<string>() == "a", "swap (string)");
+
+    v1 = picojson::value(picojson::object());
+    v2 = picojson::value(picojson::array());
+    swap(v1, v2);
+    ok(v1.is<picojson::array>(), "swap (array)");
+    ok(v2.is<picojson::object>(), "swap (object)");
+  }
+
   return success ? 0 : 1;
 }
 
