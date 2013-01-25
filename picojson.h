@@ -268,8 +268,8 @@ namespace picojson {
 #ifdef _MSC_VER
       __assume(0);
 #endif
-    return std::string();
     }
+    return std::string();
   }
   
   template <typename Iter> void copy(const std::string& s, Iter oi) {
