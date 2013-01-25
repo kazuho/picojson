@@ -268,6 +268,7 @@ namespace picojson {
 #ifdef _MSC_VER
       __assume(0);
 #endif
+    return std::string();
     }
   }
   
