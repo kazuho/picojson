@@ -66,15 +66,16 @@ namespace picojson {
   public:
     typedef std::vector<value> array;
     typedef std::map<std::string, value> object;
-  protected:
-    int type_;
-    union {
+    union _storage {
       bool boolean_;
       double number_;
       std::string* string_;
       array* array_;
       object* object_;
     };
+  protected:
+    int type_;
+    _storage u_;
   public:
     value();
     value(int type, bool);
@@ -110,7 +111,7 @@ namespace picojson {
   
   inline value::value(int type, bool) : type_(type) {
     switch (type) {
-#define INIT(p, v) case p##type: p = v; break
+#define INIT(p, v) case p##type: u_.p = v; break
       INIT(boolean_, false);
       INIT(number_, 0.0);
       INIT(string_, new std::string());
@@ -122,36 +123,36 @@ namespace picojson {
   }
   
   inline value::value(bool b) : type_(boolean_type) {
-    boolean_ = b;
+    u_.boolean_ = b;
   }
   
   inline value::value(double n) : type_(number_type) {
-    number_ = n;
+    u_.number_ = n;
   }
   
   inline value::value(const std::string& s) : type_(string_type) {
-    string_ = new std::string(s);
+    u_.string_ = new std::string(s);
   }
   
   inline value::value(const array& a) : type_(array_type) {
-    array_ = new array(a);
+    u_.array_ = new array(a);
   }
   
   inline value::value(const object& o) : type_(object_type) {
-    object_ = new object(o);
+    u_.object_ = new object(o);
   }
   
   inline value::value(const char* s) : type_(string_type) {
-    string_ = new std::string(s);
+    u_.string_ = new std::string(s);
   }
   
   inline value::value(const char* s, size_t len) : type_(string_type) {
-    string_ = new std::string(s, len);
+    u_.string_ = new std::string(s, len);
   }
   
   inline value::~value() {
     switch (type_) {
-#define DEINIT(p) case p##type: delete p; break
+#define DEINIT(p) case p##type: delete u_.p; break
       DEINIT(string_);
       DEINIT(array_);
       DEINIT(object_);
@@ -162,14 +163,14 @@ namespace picojson {
   
   inline value::value(const value& x) : type_(x.type_) {
     switch (type_) {
-#define INIT(p, v) case p##type: p = v; break
-      INIT(boolean_, x.boolean_);
-      INIT(number_, x.number_);
-      INIT(string_, new std::string(*x.string_));
-      INIT(array_, new array(*x.array_));
-      INIT(object_, new object(*x.object_));
+#define INIT(p, v) case p##type: u_.p = v; break
+      INIT(string_, new std::string(*x.u_.string_));
+      INIT(array_, new array(*x.u_.array_));
+      INIT(object_, new object(*x.u_.object_));
 #undef INIT
-    default: break;
+    default:
+      u_ = x.u_;
+      break;
     }
   }
   
@@ -205,11 +206,11 @@ namespace picojson {
 	   && is<ctype>());					\
     return var;							\
   }
-  GET(bool, boolean_)
-  GET(double, number_)
-  GET(std::string, *string_)
-  GET(array, *array_)
-  GET(object, *object_)
+  GET(bool, u_.boolean_)
+  GET(double, u_.number_)
+  GET(std::string, *u_.string_)
+  GET(array, *u_.array_)
+  GET(object, *u_.object_)
 #undef GET
   
   inline bool value::evaluate_as_boolean() const {
@@ -217,11 +218,11 @@ namespace picojson {
     case null_type:
       return false;
     case boolean_type:
-      return boolean_;
+      return u_.boolean_;
     case number_type:
-      return number_ != 0;
+      return u_.number_ != 0;
     case string_type:
-      return ! string_->empty();
+      return ! u_.string_->empty();
     default:
       return true;
     }
@@ -230,38 +231,38 @@ namespace picojson {
   inline const value& value::get(size_t idx) const {
     static value s_null;
     assert(is<array>());
-    return idx < array_->size() ? (*array_)[idx] : s_null;
+    return idx < u_.array_->size() ? (*u_.array_)[idx] : s_null;
   }
 
   inline const value& value::get(const std::string& key) const {
     static value s_null;
     assert(is<object>());
-    object::const_iterator i = object_->find(key);
-    return i != object_->end() ? i->second : s_null;
+    object::const_iterator i = u_.object_->find(key);
+    return i != u_.object_->end() ? i->second : s_null;
   }
 
   inline bool value::contains(size_t idx) const {
     assert(is<array>());
-    return idx < array_->size();
+    return idx < u_.array_->size();
   }
 
   inline bool value::contains(const std::string& key) const {
     assert(is<object>());
-    object::const_iterator i = object_->find(key);
-    return i != object_->end();
+    object::const_iterator i = u_.object_->find(key);
+    return i != u_.object_->end();
   }
   
   inline std::string value::to_str() const {
     switch (type_) {
     case null_type:      return "null";
-    case boolean_type:   return boolean_ ? "true" : "false";
+    case boolean_type:   return u_.boolean_ ? "true" : "false";
     case number_type:    {
       char buf[256];
       double tmp;
-      SNPRINTF(buf, sizeof(buf), fabs(number_) < (1ULL << 53) && modf(number_, &tmp) == 0 ? "%.f" : "%.17g", number_);
+      SNPRINTF(buf, sizeof(buf), fabs(u_.number_) < (1ULL << 53) && modf(u_.number_, &tmp) == 0 ? "%.f" : "%.17g", u_.number_);
       return buf;
     }
-    case string_type:    return *string_;
+    case string_type:    return *u_.string_;
     case array_type:     return "array";
     case object_type:    return "object";
     default:             assert(0);
@@ -307,12 +308,14 @@ namespace picojson {
   template <typename Iter> void value::serialize(Iter oi) const {
     switch (type_) {
     case string_type:
-      serialize_str(*string_, oi);
+      serialize_str(*u_.string_, oi);
       break;
     case array_type: {
       *oi++ = '[';
-      for (array::const_iterator i = array_->begin(); i != array_->end(); ++i) {
-	if (i != array_->begin()) {
+      for (array::const_iterator i = u_.array_->begin();
+           i != u_.array_->end();
+           ++i) {
+	if (i != u_.array_->begin()) {
 	  *oi++ = ',';
 	}
 	i->serialize(oi);
@@ -322,10 +325,10 @@ namespace picojson {
     }
     case object_type: {
       *oi++ = '{';
-      for (object::const_iterator i = object_->begin();
-	   i != object_->end();
+      for (object::const_iterator i = u_.object_->begin();
+	   i != u_.object_->end();
 	   ++i) {
-	if (i != object_->begin()) {
+	if (i != u_.object_->begin()) {
 	  *oi++ = ',';
 	}
 	serialize_str(i->first, oi);
