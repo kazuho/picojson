@@ -816,6 +816,7 @@ template <typename T> void is(const T& x, const T& y, const char* name = "")
 
 #include <algorithm>
 #include <sstream>
+#include <float.h>
 #include <limits.h>
 
 int main(void)
