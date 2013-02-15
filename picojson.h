@@ -30,6 +30,7 @@
 #ifndef picojson_h
 #define picojson_h
 
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <cstdio>
@@ -89,6 +90,7 @@ namespace picojson {
     ~value();
     value(const value& x);
     value& operator=(const value& x);
+    void swap(value& x);
     template <typename T> bool is() const;
     template <typename T> const T& get() const;
     template <typename T> T& get();
@@ -180,6 +182,11 @@ namespace picojson {
       new (this) value(x);
     }
     return *this;
+  }
+  
+  inline void value::swap(value& x) {
+    std::swap(type_, x.type_);
+    std::swap(u_, x.u_);
   }
   
 #define IS(ctype, jtype)			     \
@@ -765,6 +772,13 @@ namespace picojson {
   }
 }
 
+namespace std {
+  template<> inline void swap(picojson::value& x, picojson::value& y)
+    {
+      x.swap(y);
+    }
+}
+
 inline std::istream& operator>>(std::istream& is, picojson::value& x)
 {
   picojson::set_last_error(std::string());
@@ -824,7 +838,7 @@ template <typename T> void is(const T& x, const T& y, const char* name = "")
 
 int main(void)
 {
-  plan(75);
+  plan(85);
 
   // constructors
 #define TEST(expr, expected) \
@@ -995,6 +1009,26 @@ int main(void)
     string err;
     picojson::_parse(ctx, s, s + strlen(s), &err);
     ok(err.empty(), "null_parse_context");
+  }
+  
+  {
+    picojson::value v1, v2;
+    v1 = picojson::value(true);
+    swap(v1, v2);
+    ok(v1.is<picojson::null>(), "swap (null)");
+    ok(v2.get<bool>() == true, "swap (bool)");
+
+    v1 = picojson::value("a");
+    v2 = picojson::value(1.0);
+    swap(v1, v2);
+    ok(v1.get<double>() == 1.0, "swap (dobule)");
+    ok(v2.get<string>() == "a", "swap (string)");
+
+    v1 = picojson::value(picojson::object());
+    v2 = picojson::value(picojson::array());
+    swap(v1, v2);
+    ok(v1.is<picojson::array>(), "swap (array)");
+    ok(v2.is<picojson::object>(), "swap (object)");
   }
   
   return success ? 0 : 1;
