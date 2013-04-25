@@ -56,6 +56,7 @@ namespace picojson {
     null_type,
     boolean_type,
     number_type,
+	integer_type,
     string_type,
     array_type,
     object_type
@@ -70,6 +71,7 @@ namespace picojson {
     union _storage {
       bool boolean_;
       double number_;
+	  long integer_;
       std::string* string_;
       array* array_;
       object* object_;
@@ -82,6 +84,7 @@ namespace picojson {
     value(int type, bool);
     explicit value(bool b);
     explicit value(double n);
+	explicit value(long n);
     explicit value(const std::string& s);
     explicit value(const array& a);
     explicit value(const object& o);
@@ -116,6 +119,7 @@ namespace picojson {
 #define INIT(p, v) case p##type: u_.p = v; break
       INIT(boolean_, false);
       INIT(number_, 0.0);
+	  INIT(integer_, 0);
       INIT(string_, new std::string());
       INIT(array_, new array());
       INIT(object_, new object());
@@ -123,13 +127,16 @@ namespace picojson {
     default: break;
     }
   }
-  
   inline value::value(bool b) : type_(boolean_type) {
     u_.boolean_ = b;
   }
   
   inline value::value(double n) : type_(number_type) {
     u_.number_ = n;
+  }
+
+  inline value::value(long n) : type_(integer_type) {
+    u_.integer_ = n;
   }
   
   inline value::value(const std::string& s) : type_(string_type) {
@@ -175,7 +182,6 @@ namespace picojson {
       break;
     }
   }
-  
   inline value& value::operator=(const value& x) {
     if (this != &x) {
       this->~value();
@@ -183,7 +189,7 @@ namespace picojson {
     }
     return *this;
   }
-  
+
   inline void value::swap(value& x) {
     std::swap(type_, x.type_);
     std::swap(u_, x.u_);
@@ -195,7 +201,8 @@ namespace picojson {
   }
   IS(null, null)
   IS(bool, boolean)
-  IS(int, number)
+  IS(int, integer)
+  IS(long, integer)
   IS(double, number)
   IS(std::string, string)
   IS(array, array)
@@ -215,6 +222,7 @@ namespace picojson {
   }
   GET(bool, u_.boolean_)
   GET(double, u_.number_)
+  GET(long, u_.integer_)
   GET(std::string, *u_.string_)
   GET(array, *u_.array_)
   GET(object, *u_.object_)
@@ -228,6 +236,8 @@ namespace picojson {
       return u_.boolean_;
     case number_type:
       return u_.number_ != 0;
+    case integer_type:
+      return u_.integer_ != 0;
     case string_type:
       return ! u_.string_->empty();
     default:
@@ -263,6 +273,11 @@ namespace picojson {
     switch (type_) {
     case null_type:      return "null";
     case boolean_type:   return u_.boolean_ ? "true" : "false";
+	case integer_type: {
+		char buf[64];
+		SNPRINTF(buf, sizeof(buf), "%ld", u_.integer_);
+		return buf;
+	}
     case number_type:    {
       char buf[256];
       double tmp;
@@ -556,20 +571,27 @@ namespace picojson {
     return in.expect('}');
   }
   
-  template <typename Iter> inline bool _parse_number(double& out, input<Iter>& in) {
+  template <typename Context, typename Iter> inline bool _parse_number(Context& ctx, input<Iter>& in) {
     std::string num_str;
+	bool hasdot=false;
     while (1) {
       int ch = in.getc();
-      if (('0' <= ch && ch <= '9') || ch == '+' || ch == '-' || ch == '.'
-	  || ch == 'e' || ch == 'E') {
-	num_str.push_back(ch);
+      if (('0' <= ch && ch <= '9') || ch == '+' || ch == '-' || ch == '.' || ch == 'e' || ch == 'E') {
+		  if (ch=='.') hasdot=true;
+		  num_str.push_back(ch);
       } else {
-	in.ungetc();
-	break;
+		in.ungetc();
+		break;
       }
     }
     char* endp;
-    out = strtod(num_str.c_str(), &endp);
+	if (hasdot) {
+		double d = strtod(num_str.c_str(), &endp);
+		ctx.set_number(d);
+	} else {
+		long l = strtol(num_str.c_str(), &endp,10);
+		ctx.set_integer(l);
+	}
     return endp == num_str.c_str() + num_str.size();
   }
   
@@ -596,9 +618,8 @@ namespace picojson {
     default:
       if (('0' <= ch && ch <= '9') || ch == '-') {
 	in.ungetc();
-	double f;
-	if (_parse_number(f, in)) {
-	  ctx.set_number(f);
+
+	if (_parse_number(ctx, in)) {
 	  return true;
 	} else {
 	  return false;
@@ -615,6 +636,7 @@ namespace picojson {
     bool set_null() { return false; }
     bool set_bool(bool) { return false; }
     bool set_number(double) { return false; }
+	bool set_integer(long) { return false; }
     template <typename Iter> bool parse_string(input<Iter>&) { return false; }
     bool parse_array_start() { return false; }
     template <typename Iter> bool parse_array_item(input<Iter>&, size_t) {
@@ -643,6 +665,11 @@ namespace picojson {
       *out_ = value(f);
       return true;
     }
+	bool set_integer(long l) {  
+      *out_ = value(l);
+      return true;
+	}
+
     template<typename Iter> bool parse_string(input<Iter>& in) {
       *out_ = value(string_type, false);
       return _parse_string(out_->get<std::string>(), in);
@@ -681,6 +708,8 @@ namespace picojson {
     bool set_null() { return true; }
     bool set_bool(bool) { return true; }
     bool set_number(double) { return true; }
+	bool set_integer(long) { return true; } 
+
     template <typename Iter> bool parse_string(input<Iter>& in) {
       dummy_str s;
       return _parse_string(s, in);
