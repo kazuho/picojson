@@ -140,8 +140,8 @@ int _tmain(int argc, _TCHAR* argv[])
         //Again you can use picojson::value methods to access its fields.
         for (int i = 0; i < v1.get<picojson::array>().size(); i++)
         {
-            if (v1.get(i).is<double>())
-                double d = v1.get(i).get<double>();
+            if (v1.get(i).is<std::string>())
+                std::string s1 = v1.get(i).get<std::string>();
         }
     }
  
