@@ -106,9 +106,13 @@ namespace picojson {
     template <typename T> bool is() const;
     template <typename T> const T& get() const;
     template <typename T> T& get();
+    template <typename T> const T& as() const;
+    template <typename T> T& as();
     bool evaluate_as_boolean() const;
     const value& get(size_t idx) const;
     const value& get(const std::string& key) const;
+    const value& operator[](size_t idx) const;
+    const value& operator[](const std::string& key) const;
     bool contains(size_t idx) const;
     bool contains(const std::string& key) const;
     std::string to_str() const;
@@ -225,6 +229,14 @@ namespace picojson {
       throw type_mismatch("type mismatch! call is<type>() before get<type>()"); \
     return var;							\
   } \
+  template <> inline const ctype& value::as<ctype>() const {	\
+    if (!is<ctype>()) \
+      throw type_mismatch("type mismatch! call is<type>() before get<type>()"); \
+    return var;							\
+  }								\
+  template <> inline ctype& value::as<ctype>() {		\
+    if (!is<ctype>()) \
+      throw type_mismatch("type mismatch! call is<type>() before get<type>()"); \
     return var;							\
   }
   GET(bool, u_.boolean_)
@@ -260,6 +272,14 @@ namespace picojson {
     if (!is<object>()) throw type_mismatch();
     object::const_iterator i = u_.object_->find(key);
     return i != u_.object_->end() ? i->second : s_null;
+  }
+
+  inline const value& value::operator[](size_t idx) const {
+    return get(idx);
+  }
+
+  inline const value& value::operator[](const std::string& key) const {
+    return get(key);
   }
 
   inline bool value::contains(size_t idx) const {
@@ -1043,6 +1063,14 @@ int main(void)
     swap(v1, v2);
     ok(v1.is<picojson::array>(), "swap (array)");
     ok(v2.is<picojson::object>(), "swap (object)");
+  }
+
+  {
+    picojson::value v;
+    const char *s = "{\"a\": [1, 2, {\"b\": {\"c\": 3}}]}";
+    picojson::parse(v, s, s + strlen(s));
+    is(v.as<picojson::object>().size(), size_t(1), "check object size (as)");
+    is(v["a"][2]["b"]["c"].as<double>(), 3.0, "shorthand");
   }
   
   return success ? 0 : 1;
