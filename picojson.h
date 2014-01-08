@@ -522,17 +522,17 @@ namespace picojson {
     if (! ctx.parse_array_start()) {
       return false;
     }
-    if (in.expect(']')) {
-      return true;
-    }
     size_t idx = 0;
+    if (in.expect(']')) {
+      return ctx.parse_array_stop(idx);
+    }
     do {
       if (! ctx.parse_array_item(in, idx)) {
 	return false;
       }
       idx++;
     } while (in.expect(','));
-    return in.expect(']');
+    return in.expect(']') && ctx.parse_array_stop(idx);
   }
   
   template <typename Context, typename Iter> inline bool _parse_object(Context& ctx, input<Iter>& in) {
@@ -620,6 +620,7 @@ namespace picojson {
     template <typename Iter> bool parse_array_item(input<Iter>&, size_t) {
       return false;
     }
+    bool parse_array_stop(size_t) { return false; }
     bool parse_object_start() { return false; }
     template <typename Iter> bool parse_object_item(input<Iter>&, const std::string&) {
       return false;
@@ -657,6 +658,7 @@ namespace picojson {
       default_parse_context ctx(&a.back());
       return _parse(ctx, in);
     }
+    bool parse_array_stop(size_t) { return true; }
     bool parse_object_start() {
       *out_ = value(object_type, false);
       return true;
@@ -689,6 +691,7 @@ namespace picojson {
     template <typename Iter> bool parse_array_item(input<Iter>& in, size_t) {
       return _parse(*this, in);
     }
+    bool parse_array_stop(size_t) { return true; }
     bool parse_object_start() { return true; }
     template <typename Iter> bool parse_object_item(input<Iter>& in, const std::string&) {
       return _parse(*this, in);
