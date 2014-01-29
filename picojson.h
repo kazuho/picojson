@@ -100,6 +100,9 @@ namespace picojson {
     bool evaluate_as_boolean() const;
     const value& get(size_t idx) const;
     const value& get(const std::string& key) const;
+    value& get(size_t idx);
+    value& get(const std::string& key);
+
     bool contains(size_t idx) const;
     bool contains(const std::string& key) const;
     std::string to_str() const;
@@ -258,6 +261,19 @@ namespace picojson {
     return i != u_.object_->end() ? i->second : s_null;
   }
 
+
+  inline value& value::get(size_t idx) {
+    static value s_null;
+    assert(is<array>());
+    return idx < u_.array_->size() ? (*u_.array_)[idx] : s_null;
+  }
+  inline value& value::get(const std::string& key) {
+    static value s_null;
+    assert(is<object>());
+    object::iterator i = u_.object_->find(key);
+    return i != u_.object_->end() ? i->second : s_null;
+  }
+
   inline bool value::contains(size_t idx) const {
     assert(is<array>());
     return idx < u_.array_->size();
@@ -281,7 +297,8 @@ namespace picojson {
     case number_type:    {
       char buf[256];
       double tmp;
-      SNPRINTF(buf, sizeof(buf), fabs(u_.number_) < (1ULL << 53) && modf(u_.number_, &tmp) == 0 ? "%.f" : "%.17g", u_.number_);
+	  SNPRINTF(buf, sizeof(buf), "%.f", u_.number_); // the line below would print 0.0 as 0, making it impossible to read back as float
+      //SNPRINTF(buf, sizeof(buf), fabs(u_.number_) < (1ULL << 53) && modf(u_.number_, &tmp) == 0 ? "%.f" : "%.17g", u_.number_);
       return buf;
     }
     case string_type:    return *u_.string_;
@@ -347,7 +364,8 @@ namespace picojson {
     }
     case object_type: {
       *oi++ = '{';
-      for (object::const_iterator i = u_.object_->begin();
+   
+	  for (object::const_iterator i = u_.object_->begin();
 	   i != u_.object_->end();
 	   ++i) {
 	if (i != u_.object_->begin()) {
