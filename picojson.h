@@ -214,7 +214,7 @@ namespace picojson {
   
 #define GET(ctype, var)						\
   template <> inline const ctype& value::get<ctype>() const {	\
-    assert("type mismatch! call vis<type>() before get<type>()" \
+    assert("type mismatch! call is<type>() before get<type>()" \
 	   && is<ctype>());				        \
     return var;							\
   }								\
