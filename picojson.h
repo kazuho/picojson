@@ -105,6 +105,8 @@ namespace picojson {
     std::string to_str() const;
     template <typename Iter> void serialize(Iter os) const;
     std::string serialize() const;
+    template <typename Iter> void pretty_serialize(Iter os, size_t indent = 0) const;
+    std::string pretty_serialize() const;
   private:
     template <typename T> value(const T*); // intentionally defined to block implicit conversion of pointer to bool
   };
@@ -370,6 +372,67 @@ namespace picojson {
   inline std::string value::serialize() const {
     std::string s;
     serialize(std::back_inserter(s));
+    return s;
+  }
+
+  template <typename Iter> inline static void add_indent(Iter oi, size_t indent) {
+    for (size_t i = 0; i < (indent * 2); ++i) *oi++ = ' ';
+  }
+
+  template <typename Iter> void value::pretty_serialize(Iter oi, size_t indent) const {
+    switch (type_) {
+    case string_type:
+      serialize_str(*u_.string_, oi);
+      break;
+    case array_type: {
+      *oi++ = '[';
+      *oi++ = '\n';
+      for (array::const_iterator i = u_.array_->begin();
+           i != u_.array_->end();
+           ++i) {
+  if (i != u_.array_->begin()) {
+    *oi++ = ',';
+    *oi++ = '\n';
+  }
+  add_indent(oi, indent + 1);
+  i->pretty_serialize(oi, indent + 1);
+      }
+      *oi++ = '\n';
+      add_indent(oi, indent);
+      *oi++ = ']';
+      break;
+    }
+    case object_type: {
+      *oi++ = '{';
+      *oi++ = '\n';
+      for (object::const_iterator i = u_.object_->begin();
+     i != u_.object_->end();
+     ++i) {
+  if (i != u_.object_->begin()) {
+    *oi++ = ',';
+    *oi++ = '\n';
+  }
+  add_indent(oi, indent + 1);
+  serialize_str(i->first, oi);
+  *oi++ = ' ';
+  *oi++ = ':';
+  *oi++ = ' ';
+  i->second.pretty_serialize(oi, indent + 1);
+      }
+      *oi++ = '\n';
+      add_indent(oi, indent);
+      *oi++ = '}';
+      break;
+    }
+    default:
+      copy(to_str(), oi);
+      break;
+    }
+  }
+
+  inline std::string value::pretty_serialize() const {
+    std::string s;
+    pretty_serialize(std::back_inserter(s));
     return s;
   }
   
