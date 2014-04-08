@@ -41,6 +41,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <stdexcept>
 
 #ifdef _MSC_VER
     #define SNPRINTF _snprintf_s
@@ -62,7 +63,18 @@ namespace picojson {
   };
   
   struct null {};
-  
+
+  class type_mismatch : public std::runtime_error {
+  public:
+    type_mismatch()
+      : std::runtime_error("type mismatch!")
+    {}
+
+    type_mismatch(const char* msg)
+      : std::runtime_error(msg)
+    {}
+  };
+
   class value {
   public:
     typedef std::vector<value> array;
@@ -94,9 +106,13 @@ namespace picojson {
     template <typename T> bool is() const;
     template <typename T> const T& get() const;
     template <typename T> T& get();
+    template <typename T> const T& as() const;
+    template <typename T> T& as();
     bool evaluate_as_boolean() const;
     const value& get(size_t idx) const;
     const value& get(const std::string& key) const;
+    const value& operator[](size_t idx) const;
+    const value& operator[](const std::string& key) const;
     bool contains(size_t idx) const;
     bool contains(const std::string& key) const;
     std::string to_str() const;
@@ -204,13 +220,23 @@ namespace picojson {
   
 #define GET(ctype, var)						\
   template <> inline const ctype& value::get<ctype>() const {	\
-    assert("type mismatch! call vis<type>() before get<type>()" \
-	   && is<ctype>());				        \
+    if (!is<ctype>()) \
+      throw type_mismatch("type mismatch! call is<type>() before get<type>()"); \
     return var;							\
   }								\
   template <> inline ctype& value::get<ctype>() {		\
-    assert("type mismatch! call is<type>() before get<type>()"	\
-	   && is<ctype>());					\
+    if (!is<ctype>()) \
+      throw type_mismatch("type mismatch! call is<type>() before get<type>()"); \
+    return var;							\
+  } \
+  template <> inline const ctype& value::as<ctype>() const {	\
+    if (!is<ctype>()) \
+      throw type_mismatch("type mismatch! call is<type>() before get<type>()"); \
+    return var;							\
+  }								\
+  template <> inline ctype& value::as<ctype>() {		\
+    if (!is<ctype>()) \
+      throw type_mismatch("type mismatch! call is<type>() before get<type>()"); \
     return var;							\
   }
   GET(bool, u_.boolean_)
@@ -237,24 +263,32 @@ namespace picojson {
   
   inline const value& value::get(size_t idx) const {
     static value s_null;
-    assert(is<array>());
+    if (!is<array>()) throw type_mismatch();
     return idx < u_.array_->size() ? (*u_.array_)[idx] : s_null;
   }
 
   inline const value& value::get(const std::string& key) const {
     static value s_null;
-    assert(is<object>());
+    if (!is<object>()) throw type_mismatch();
     object::const_iterator i = u_.object_->find(key);
     return i != u_.object_->end() ? i->second : s_null;
   }
 
+  inline const value& value::operator[](size_t idx) const {
+    return get(idx);
+  }
+
+  inline const value& value::operator[](const std::string& key) const {
+    return get(key);
+  }
+
   inline bool value::contains(size_t idx) const {
-    assert(is<array>());
+    if (!is<array>()) throw type_mismatch();
     return idx < u_.array_->size();
   }
 
   inline bool value::contains(const std::string& key) const {
-    assert(is<object>());
+    if (!is<object>()) throw type_mismatch();
     object::const_iterator i = u_.object_->find(key);
     return i != u_.object_->end();
   }
@@ -272,7 +306,7 @@ namespace picojson {
     case string_type:    return *u_.string_;
     case array_type:     return "array";
     case object_type:    return "object";
-    default:             assert(0);
+    default:             throw type_mismatch();
 #ifdef _MSC_VER
       __assume(0);
 #endif
@@ -764,7 +798,7 @@ namespace picojson {
     PICOJSON_CMP(array);
     PICOJSON_CMP(object);
 #undef PICOJSON_CMP
-    assert(0);
+    throw type_mismatch();
 #ifdef _MSC_VER
     __assume(0);
 #endif
@@ -1033,6 +1067,14 @@ int main(void)
     swap(v1, v2);
     ok(v1.is<picojson::array>(), "swap (array)");
     ok(v2.is<picojson::object>(), "swap (object)");
+  }
+
+  {
+    picojson::value v;
+    const char *s = "{\"a\": [1, 2, {\"b\": {\"c\": 3}}]}";
+    picojson::parse(v, s, s + strlen(s));
+    is(v.as<picojson::object>().size(), size_t(1), "check object size (as)");
+    is(v["a"][2]["b"]["c"].as<double>(), 3.0, "shorthand");
   }
   
   return success ? 0 : 1;
