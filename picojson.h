@@ -377,7 +377,8 @@ namespace picojson {
       if (last_ch_ == '\n') {
 	line_++;
       }
-      last_ch_ = *cur_++ & 0xff;
+      last_ch_ = *cur_ & 0xff;
+      ++cur_;
       return last_ch_;
     }
     void ungetc() {
