@@ -97,6 +97,9 @@ namespace picojson {
     bool evaluate_as_boolean() const;
     const value& get(size_t idx) const;
     const value& get(const std::string& key) const;
+    value& get(size_t idx);
+    value& get(const std::string& key);
+
     bool contains(size_t idx) const;
     bool contains(const std::string& key) const;
     std::string to_str() const;
@@ -241,10 +244,23 @@ namespace picojson {
     return idx < u_.array_->size() ? (*u_.array_)[idx] : s_null;
   }
 
+  inline value& value::get(size_t idx) {
+    static value s_null;
+    assert(is<array>());
+    return idx < u_.array_->size() ? (*u_.array_)[idx] : s_null;
+  }
+
   inline const value& value::get(const std::string& key) const {
     static value s_null;
     assert(is<object>());
     object::const_iterator i = u_.object_->find(key);
+    return i != u_.object_->end() ? i->second : s_null;
+  }
+
+  inline value& value::get(const std::string& key) {
+    static value s_null;
+    assert(is<object>());
+    object::iterator i = u_.object_->find(key);
     return i != u_.object_->end() ? i->second : s_null;
   }
 
