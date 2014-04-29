@@ -107,13 +107,13 @@ namespace picojson {
     bool contains(size_t idx) const;
     bool contains(const std::string& key) const;
     std::string to_str() const;
-    template <typename Iter> void serialize(Iter os, bool prettify = false) const;
-    std::string serialize(bool prettify = false) const;
+    template <typename Iter> void serialize(Iter os, bool prettify = false, bool web_escape = true) const;
+    std::string serialize(bool prettify = false, bool web_escape = true) const;
   private:
     template <typename T> value(const T*); // intentionally defined to block implicit conversion of pointer to bool
     template <typename Iter> static void _indent(Iter os, int indent);
-    template <typename Iter> void _serialize(Iter os, int indent) const;
-    std::string _serialize(int indent) const;
+    template <typename Iter> void _serialize(Iter os, int indent, bool web_escape) const;
+    std::string _serialize(int indent, bool web_escape) const;
   };
   
   typedef value::array array;
@@ -307,14 +307,16 @@ namespace picojson {
     std::copy(s.begin(), s.end(), oi);
   }
   
-  template <typename Iter> void serialize_str(const std::string& s, Iter oi) {
+  template <typename Iter> void serialize_str(const std::string& s, Iter oi, bool web_escape) {
     *oi++ = '"';
     for (std::string::const_iterator i = s.begin(); i != s.end(); ++i) {
       switch (*i) {
 #define MAP(val, sym) case val: copy(sym, oi); break
 	MAP('"', "\\\"");
 	MAP('\\', "\\\\");
-	MAP('/', "\\/");
+	case '/': {
+		if (web_escape) { copy("\\/", oi); } else { copy("/", oi); } break;
+	}
 	MAP('\b', "\\b");
 	MAP('\f', "\\f");
 	MAP('\n', "\\n");
@@ -335,12 +337,12 @@ namespace picojson {
     *oi++ = '"';
   }
 
-  template <typename Iter> void value::serialize(Iter oi, bool prettify) const {
-    return _serialize(oi, prettify ? 0 : -1);
+  template <typename Iter> void value::serialize(Iter oi, bool prettify, bool web_escape) const {
+    return _serialize(oi, prettify ? 0 : -1, web_escape);
   }
   
-  inline std::string value::serialize(bool prettify) const {
-    return _serialize(prettify ? 0 : -1);
+  inline std::string value::serialize(bool prettify, bool web_escape) const {
+    return _serialize(prettify ? 0 : -1, web_escape);
   }
 
   template <typename Iter> void value::_indent(Iter oi, int indent) {
@@ -350,10 +352,10 @@ namespace picojson {
     }
   }
 
-  template <typename Iter> void value::_serialize(Iter oi, int indent) const {
+  template <typename Iter> void value::_serialize(Iter oi, int indent, bool web_escape) const {
     switch (type_) {
     case string_type:
-      serialize_str(*u_.string_, oi);
+      serialize_str(*u_.string_, oi, web_escape);
       break;
     case array_type: {
       *oi++ = '[';
@@ -369,7 +371,7 @@ namespace picojson {
         if (indent != -1) {
           _indent(oi, indent);
         }
-	i->_serialize(oi, indent);
+	i->_serialize(oi, indent, web_escape);
       }
       if (indent != -1) {
         --indent;
@@ -394,12 +396,12 @@ namespace picojson {
         if (indent != -1) {
           _indent(oi, indent);
         }
-	serialize_str(i->first, oi);
+	serialize_str(i->first, oi, web_escape);
 	*oi++ = ':';
         if (indent != -1) {
           *oi++ = ' ';
         }
-        i->second._serialize(oi, indent);
+        i->second._serialize(oi, indent, web_escape);
       }
       if (indent != -1) {
         --indent;
@@ -419,9 +421,9 @@ namespace picojson {
     }
   }
   
-  inline std::string value::_serialize(int indent) const {
+  inline std::string value::_serialize(int indent, bool web_escape) const {
     std::string s;
-    _serialize(std::back_inserter(s), indent);
+    _serialize(std::back_inserter(s), indent, web_escape);
     return s;
   }
   
