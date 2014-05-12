@@ -38,6 +38,7 @@
 #include <cstring>
 #include <iostream>
 #include <iterator>
+#include <limits>
 #include <map>
 #include <string>
 #include <vector>
@@ -149,6 +150,13 @@ namespace picojson {
   }
   
   inline value::value(double n) : type_(number_type) {
+	if (std::numeric_limits<double>::is_iec559) {
+		if (std::abs(n) == std::numeric_limits<double>::infinity() ||
+		    std::abs(n) != std::abs(n) /* will not work with -ffast-math*/) {
+			type_ = null_type;
+			return;
+		}
+	}
     u_.number_ = n;
   }
   
