@@ -1,7 +1,10 @@
 # PicoJSON - a C++ JSON parser / serializer
 
-Copyright &copy; 2009-2010 Cybozu Labs, Inc.
-Copyright &copy; 2011 Kazuho Oku
+## Copyright and License
+
+Copyright &copy; 2009-2010 Cybozu Labs, Inc. / 2011-2014 Kazuho Oku
+
+Licensed under [2-clause BSD license](http://opensource.org/licenses/BSD-2-Clause)
 
 ## Introduction
 
