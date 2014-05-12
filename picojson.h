@@ -300,6 +300,17 @@ namespace picojson {
       char buf[256];
       double tmp;
       SNPRINTF(buf, sizeof(buf), fabs(u_.number_) < (1ULL << 53) && modf(u_.number_, &tmp) == 0 ? "%.f" : "%.17g", u_.number_);
+#if PICOJSON_USE_LOCALE
+      char *decimal_point = localeconv()->decimal_point;
+      if (strcmp(decimal_point, ".") != 0) {
+        size_t decimal_point_len = strlen(decimal_point);
+        for (char *p = buf; *p != '\0'; ++p) {
+          if (strncmp(p, decimal_point, decimal_point_len) == 0) {
+            return std::string(buf, p) + "." + (p + decimal_point_len);
+          }
+        }
+      }
+#endif
       return buf;
     }
     case string_type:    return *u_.string_;
@@ -639,9 +650,15 @@ namespace picojson {
     std::string num_str;
     while (1) {
       int ch = in.getc();
-      if (('0' <= ch && ch <= '9') || ch == '+' || ch == '-' || ch == '.'
+      if (('0' <= ch && ch <= '9') || ch == '+' || ch == '-'
 	  || ch == 'e' || ch == 'E') {
 	num_str.push_back(ch);
+      } else if (ch == '.') {
+#if PICOJSON_USE_LOCALE
+        num_str += localeconv()->decimal_point;
+#else
+        num_str.push_back('.');
+#endif
       } else {
 	in.ungetc();
 	break;
