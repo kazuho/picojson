@@ -42,6 +42,16 @@
 #include <string>
 #include <vector>
 
+// to disable the use of localeconv(3), set PICOJSON_USE_LOCALE to 0
+#ifndef PICOJSON_USE_LOCALE
+# define PICOJSON_USE_LOCALE 1
+#endif
+#if PICOJSON_USE_LOCALE
+extern "C" {
+# include <locale.h>
+}
+#endif
+
 #ifdef _MSC_VER
     #define SNPRINTF _snprintf_s
     #pragma warning(push)
@@ -910,6 +920,10 @@ template <typename T> void is(const T& x, const T& y, const char* name = "")
 
 int main(void)
 {
+#if PICOJSON_USE_LOCALE
+  setlocale(LC_ALL, "");
+#endif
+
   plan(85);
 
   // constructors
