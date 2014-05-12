@@ -1,7 +1,5 @@
 # PicoJSON - a C++ JSON parser / serializer
 
-## Copyright and License
-
 Copyright &copy; 2009-2010 Cybozu Labs, Inc. / 2011-2014 Kazuho Oku
 
 Licensed under [2-clause BSD license](http://opensource.org/licenses/BSD-2-Clause)
@@ -14,7 +12,6 @@ PicoJSON is a tiny JSON parser / serializer for C++ with following properties:
 - no external dependencies (only uses standard C++ libraries)
 - STL-frendly (arrays are represented by using std::vector, objects are std::map)
 - provides both pull interface and streaming (event-based) interface
-- licensed under the new BSD License
 
 ## Reading JSON using the pull interface
 
