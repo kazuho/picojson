@@ -162,4 +162,4 @@ v.serialize(std::ostream_iterator(std::cout));
 
 ## Further reading
 
-Examples can be found in the <i>examples</i> directory.
+Examples can be found in the <i>examples</i> directory, and on the [Wiki](https://github.com/kazuho/picojson/wiki).  Please add your favorite examples to the Wiki.
