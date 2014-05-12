@@ -39,8 +39,20 @@
 #include <iostream>
 #include <iterator>
 #include <map>
+#include <stdexcept>
 #include <string>
 #include <vector>
+
+// for compatibility, use C versions of float checking functions
+extern "C" {
+#ifdef _MSC_VER
+# include <float.h>
+#elif defined(__INTEL_COMPILER)
+# include <mathimf.h>
+#else
+# include <math.h>
+#endif
+}
 
 // to disable the use of localeconv(3), set PICOJSON_USE_LOCALE to 0
 #ifndef PICOJSON_USE_LOCALE
@@ -149,6 +161,15 @@ namespace picojson {
   }
   
   inline value::value(double n) : type_(number_type) {
+    if (
+#ifdef _MSC_VER
+        _isnan(n) || _isinf(n)
+#else
+        isnan(n) || isinf(n)
+#endif
+        ) {
+      throw std::overflow_error("");
+    }
     u_.number_ = n;
   }
   
@@ -941,7 +962,7 @@ int main(void)
   setlocale(LC_ALL, "");
 #endif
 
-  plan(85);
+  plan(89);
 
   // constructors
 #define TEST(expr, expected) \
@@ -1142,6 +1163,13 @@ int main(void)
     ok(err.empty(), "parse test data for prettifying output");
     ok(v.serialize() == "{\"a\":1,\"b\":[2,{\"b1\":\"abc\"}],\"c\":{},\"d\":[]}", "non-prettifying output");
     ok(v.serialize(true) == "{\n  \"a\": 1,\n  \"b\": [\n    2,\n    {\n      \"b1\": \"abc\"\n    }\n  ],\n  \"c\": {},\n  \"d\": []\n}\n", "prettifying output");
+  }
+
+  try {
+    picojson::value(NAN);
+    ok(false, "should not accept NaN");
+  } catch (std::overflow_error e) {
+    ok(true, "should not accept NaN");
   }
 
   return success ? 0 : 1;
