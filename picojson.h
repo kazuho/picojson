@@ -163,7 +163,7 @@ namespace picojson {
   inline value::value(double n) : type_(number_type) {
     if (
 #ifdef _MSC_VER
-        _isnan(n) || _isinf(n)
+        ! _finite(n)
 #else
         isnan(n) || isinf(n)
 #endif
