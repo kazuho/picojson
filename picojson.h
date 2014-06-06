@@ -163,7 +163,7 @@ namespace picojson {
 #ifdef _MSC_VER
         ! _finite(n)
 #else
-        isnan(n) || isinf(n)
+        std::isnan(n) || std::isinf(n)
 #endif
         ) {
       throw std::overflow_error("");
