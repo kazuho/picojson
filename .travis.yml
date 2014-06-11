@@ -1,5 +1,11 @@
 language: cpp
 
+https://github.com/d-led/picojson.git# whitelist
+
+branches:
+  only:
+    - travis-ci
+
 compiler:
   - clang
   - gcc
