@@ -29,7 +29,11 @@
 #define picojson_h
 
 #include <algorithm>
-#include <cmath>
+#if __cplusplus >= 201103L
+# include <cmath>  // for std::isnan, std::isinf
+#else
+# include <math.h> // for isnan, isinf
+#endif
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
