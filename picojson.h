@@ -239,7 +239,6 @@ namespace picojson {
   }
   IS(null, null)
   IS(bool, boolean)
-  IS(int, number)
   IS(double, number)
   IS(std::string, string)
   IS(array, array)
