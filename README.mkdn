@@ -7,7 +7,7 @@ Licensed under [2-clause BSD license](http://opensource.org/licenses/BSD-2-Claus
 
 ## Version
 
-1.0.0 [![Build Status](https://travis-ci.org/kazuho/picojson.svg?branch=master)](https://travis-ci.org/kazuho/picojson)
+1.0.1-dev [![Build Status](https://travis-ci.org/kazuho/picojson.svg?branch=master)](https://travis-ci.org/kazuho/picojson)
 
 ## Introduction
 
