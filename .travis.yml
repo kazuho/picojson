@@ -1,0 +1,12 @@
+language: cpp
+
+branches:
+  only:
+    - travis-ci
+
+compiler:
+  - clang
+  - gcc
+
+script:
+  - make test
