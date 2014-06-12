@@ -29,7 +29,6 @@
 #define picojson_h
 
 #include <algorithm>
-#include <cassert>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -60,6 +59,10 @@ extern "C" {
 extern "C" {
 # include <locale.h>
 }
+#endif
+
+#ifndef PICOJSON_ASSERT
+# define PICOJSON_ASSERT(e) do { if (! e) throw std::runtime_error(#e); } while (0)
 #endif
 
 #ifdef _MSC_VER
@@ -245,12 +248,12 @@ namespace picojson {
   
 #define GET(ctype, var)						\
   template <> inline const ctype& value::get<ctype>() const {	\
-    assert("type mismatch! call vis<type>() before get<type>()" \
+    PICOJSON_ASSERT("type mismatch! call vis<type>() before get<type>()" \
 	   && is<ctype>());				        \
     return var;							\
   }								\
   template <> inline ctype& value::get<ctype>() {		\
-    assert("type mismatch! call is<type>() before get<type>()"	\
+    PICOJSON_ASSERT("type mismatch! call is<type>() before get<type>()"	\
 	   && is<ctype>());					\
     return var;							\
   }
@@ -278,37 +281,37 @@ namespace picojson {
   
   inline const value& value::get(size_t idx) const {
     static value s_null;
-    assert(is<array>());
+    PICOJSON_ASSERT(is<array>());
     return idx < u_.array_->size() ? (*u_.array_)[idx] : s_null;
   }
 
   inline value& value::get(size_t idx) {
     static value s_null;
-    assert(is<array>());
+    PICOJSON_ASSERT(is<array>());
     return idx < u_.array_->size() ? (*u_.array_)[idx] : s_null;
   }
 
   inline const value& value::get(const std::string& key) const {
     static value s_null;
-    assert(is<object>());
+    PICOJSON_ASSERT(is<object>());
     object::const_iterator i = u_.object_->find(key);
     return i != u_.object_->end() ? i->second : s_null;
   }
 
   inline value& value::get(const std::string& key) {
     static value s_null;
-    assert(is<object>());
+    PICOJSON_ASSERT(is<object>());
     object::iterator i = u_.object_->find(key);
     return i != u_.object_->end() ? i->second : s_null;
   }
 
   inline bool value::contains(size_t idx) const {
-    assert(is<array>());
+    PICOJSON_ASSERT(is<array>());
     return idx < u_.array_->size();
   }
 
   inline bool value::contains(const std::string& key) const {
-    assert(is<object>());
+    PICOJSON_ASSERT(is<object>());
     object::const_iterator i = u_.object_->find(key);
     return i != u_.object_->end();
   }
@@ -337,7 +340,7 @@ namespace picojson {
     case string_type:    return *u_.string_;
     case array_type:     return "array";
     case object_type:    return "object";
-    default:             assert(0);
+    default:             PICOJSON_ASSERT(0);
 #ifdef _MSC_VER
       __assume(0);
 #endif
@@ -493,7 +496,7 @@ namespace picojson {
     }
     void ungetc() {
       if (last_ch_ != -1) {
-	assert(! ungot_);
+	PICOJSON_ASSERT(! ungot_);
 	ungot_ = true;
       }
     }
@@ -880,7 +883,7 @@ namespace picojson {
     PICOJSON_CMP(array);
     PICOJSON_CMP(object);
 #undef PICOJSON_CMP
-    assert(0);
+    PICOJSON_ASSERT(0);
 #ifdef _MSC_VER
     __assume(0);
 #endif
