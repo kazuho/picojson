@@ -65,7 +65,7 @@ extern "C" {
 #endif
 
 #ifndef PICOJSON_ASSERT
-# define PICOJSON_ASSERT(e) do { if (! e) throw std::runtime_error(#e); } while (0)
+# define PICOJSON_ASSERT(e) do { if (! (e)) throw std::runtime_error(#e); } while (0)
 #endif
 
 #ifdef _MSC_VER
@@ -1173,6 +1173,15 @@ int main(void)
     ok(false, "should not accept NaN");
   } catch (std::overflow_error e) {
     ok(true, "should not accept NaN");
+  }
+
+  try {
+    picojson::value v(123.);
+    ok(! v.is<bool>(), "is<wrong_type>() should return false");
+    v.get<bool>();
+    ok(false, "get<wrong_type>() should raise an error");
+  } catch (std::runtime_error e) {
+    ok(true, "get<wrong_type>() should raise an error");
   }
 
   done_testing();
