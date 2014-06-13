@@ -1091,6 +1091,11 @@ int main(void)
   TEST("\"\\u0061\\u30af\\u30ea\\u30b9\"", string,
        string("a\xe3\x82\xaf\xe3\x83\xaa\xe3\x82\xb9"), false);
   TEST("\"\\ud840\\udc0b\"", string, string("\xf0\xa0\x80\x8b"), false);
+#ifdef PICOJSON_USE_INT64
+  TEST("0", int64_t, 0, true);
+  TEST("-9223372036854775808", int64_t, INT64_MIN, true);
+  TEST("9223372036854775807", int64_t, INT64_MAX, true);
+#endif
 #undef TEST
 
 #define TEST(type, expr) {					       \
@@ -1268,6 +1273,12 @@ int main(void)
 
     ok(! v1.is<int64_t>(), "is no more int64_type once get<double>() is called");
     ok(v1.is<double>(), "and is still a double");
+
+    const char *s = "-9223372036854775809";
+    ok(picojson::parse(v1, s, s + strlen(s)).empty(), "parse underflowing int64_t");
+    ok(! v1.is<int64_t>(), "underflowing int is not int64_t");
+    ok(v1.is<double>(), "underflowing int is double");
+    ok(v1.get<double>() + 9.22337203685478e+18 < 65536, "double value is somewhat correct");
   }
 #endif
 
