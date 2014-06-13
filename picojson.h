@@ -118,9 +118,6 @@ namespace picojson {
   protected:
     int type_;
     _storage u_;
-#ifdef PICOJSON_USE_INT64
-    mutable double double_buf_;
-#endif
   public:
     value();
     value(int type, bool);
@@ -283,35 +280,28 @@ namespace picojson {
       ;
   }
   
-#define CGET(ctype, var)					\
+#define GET(ctype, var)						\
   template <> inline const ctype& value::get<ctype>() const {	\
     PICOJSON_ASSERT("type mismatch! call vis<type>() before get<type>()" \
 	   && is<ctype>());				        \
     return var;							\
-  }
-#define MGET(ctype, var)					\
+  }								\
   template <> inline ctype& value::get<ctype>() {		\
     PICOJSON_ASSERT("type mismatch! call is<type>() before get<type>()"	\
 	   && is<ctype>());					\
     return var;							\
   }
-#define GET(ctype, var) \
-  CGET(ctype, var) \
-  MGET(ctype, var)
   GET(bool, u_.boolean_)
   GET(std::string, *u_.string_)
   GET(array, *u_.array_)
   GET(object, *u_.object_)
 #ifdef PICOJSON_USE_INT64
-  CGET(double, type_ == int64_type ? double_buf_ = u_.int64_ : u_.number_)
-  MGET(double, type_ == int64_type ? (type_ = number_type, u_.number_ = u_.int64_) : u_.number_)
+  GET(double, (type_ == int64_type && (const_cast<value*>(this)->type_ = number_type, const_cast<value*>(this)->u_.number_ = u_.int64_), u_.number_))
   GET(int64_t, u_.int64_)
 #else
   GET(double, u_.number_)
 #endif
 #undef GET
-#undef CGET
-#undef MGET
   
   inline bool value::evaluate_as_boolean() const {
     switch (type_) {
@@ -1272,15 +1262,10 @@ int main(void)
     ok(v1.is<int64_t>(), "is int64_t");
     ok(v1.is<double>(), "is double as well");
     ok(v1.serialize() == "123", "serialize the value");
-    ok(static_cast<const picojson::value&>(v1).get<int64_t>() == 123, "value is correct as int64_t (const)");
     ok(v1.get<int64_t>() == 123, "value is correct as int64_t");
-    ok(static_cast<const picojson::value&>(v1).get<double>() == 123.0, "value is correct as double");
-    ok(v1.is<int64_t>(), "still is int64_t");
-    ok(v1.is<double>(), "still is double as well");
-    ok(v1.get<int64_t>() == 123, "value is still correct as int64_t");
+    ok(v1.get<double>(), "value is correct as double");
 
-    ok(v1.get<double>() == 123.0, "non-const version of get<double>() should return a correct value");
-    ok(! v1.is<int64_t>(), "is no more int64_type once a non-const version of get<double>() is called");
+    ok(! v1.is<int64_t>(), "is no more int64_type once get<double>() is called");
     ok(v1.is<double>(), "and is still a double");
   }
 #endif
