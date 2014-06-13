@@ -929,19 +929,19 @@ inline std::ostream& operator<<(std::ostream& os, const picojson::value& x)
 
 using namespace std;
   
-static void plan(int num)
-{
-  printf("1..%d\n", num);
-}
-
 static bool success = true;
+static int test_num = 0;
 
 static void ok(bool b, const char* name = "")
 {
-  static int n = 1;
   if (! b)
     success = false;
-  printf("%s %d - %s\n", b ? "ok" : "ng", n++, name);
+  printf("%s %d - %s\n", b ? "ok" : "ng", ++test_num, name);
+}
+
+static void done_testing()
+{
+  printf("1..%d\n", test_num);
 }
 
 template <typename T> void is(const T& x, const T& y, const char* name = "")
@@ -963,8 +963,6 @@ int main(void)
 #if PICOJSON_USE_LOCALE
   setlocale(LC_ALL, "");
 #endif
-
-  plan(89);
 
   // constructors
 #define TEST(expr, expected) \
@@ -1173,6 +1171,8 @@ int main(void)
   } catch (std::overflow_error e) {
     ok(true, "should not accept NaN");
   }
+
+  done_testing();
 
   return success ? 0 : 1;
 }
