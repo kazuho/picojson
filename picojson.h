@@ -769,13 +769,13 @@ namespace picojson {
         }
 #ifdef PICOJSON_USE_INT64
         {
-          int64_t i64val;
           errno = 0;
-          if (! ((i64val = strtoimax(num_str.c_str(), &endp, 10)) == 0 && errno != 0)
-              && std::numeric_limits<int64_t>::min() <= i64val
-              && i64val <= std::numeric_limits<int64_t>::max()
+          intmax_t ival = strtoimax(num_str.c_str(), &endp, 10);
+          if (errno == 0
+              && std::numeric_limits<int64_t>::min() <= ival
+              && ival <= std::numeric_limits<int64_t>::max()
               && endp == num_str.c_str() + num_str.size()) {
-            ctx.set_int64(i64val);
+            ctx.set_int64(ival);
             return true;
           }
         }
