@@ -29,7 +29,6 @@
 #define picojson_h
 
 #include <algorithm>
-#include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -40,16 +39,20 @@
 #include <string>
 #include <vector>
 
-// for compatibility, use C versions of float checking functions
-extern "C" {
-#ifdef _MSC_VER
-# include <float.h>
-#elif defined(__INTEL_COMPILER)
-# include <mathimf.h>
+// for isnan/isinf
+#if __cplusplus>=201103L
+# include <cmath>
 #else
-# include <math.h>
-#endif
+extern "C" {
+# ifdef _MSC_VER
+#  include <float.h>
+# elif defined(__INTEL_COMPILER)
+#  include <mathimf.h>
+# else
+#  include <math.h>
+# endif
 }
+#endif
 
 // to disable the use of localeconv(3), set PICOJSON_USE_LOCALE to 0
 #ifndef PICOJSON_USE_LOCALE
