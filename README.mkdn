@@ -165,6 +165,19 @@ picojson::value v;
 v.serialize(std::ostream_iterator(std::cout));
 </pre>
 
+## Experimental support for int64_t
+
+Experimental suport for int64_t becomes available if the code is compiled with preprocessor macro `PICOJSON_USE_INT64`.
+
+Turning on the feature will cause following changes to picojson:
+- new constructor `picojson::value(int64_t)` is defined
+- `is<int64_t>()` and `get<int64_t>()` become available
+- numerics in JSON within the bounds of int64_t and not using `.` nor `e`/`E` are considered as int64 type
+ - the values are also avaliable as `double`s as well (i.e. all values which are `.is<int64_t>() == true` are also `.is<double>() == true`)
+- int64 values are converted to double once `get<double>()` is called
+
+Enabling the feature should not cause compatibility problem with code that do not use the feature.
+
 ## Further reading
 
 Examples can be found in the <i>examples</i> directory, and on the [Wiki](https://github.com/kazuho/picojson/wiki).  Please add your favorite examples to the Wiki.

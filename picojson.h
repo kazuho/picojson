@@ -55,6 +55,7 @@ extern "C" {
 }
 #endif
 
+// experimental support for int64_t (see README.mkdn for detail)
 #ifdef PICOJSON_USE_INT64
 # include <inttypes.h>
 #endif
