@@ -1175,6 +1175,15 @@ int main(void)
     ok(true, "should not accept NaN");
   }
 
+  try {
+    picojson::value v(123.);
+    ok(! v.is<bool>(), "is<wrong_type>() should return false");
+    v.get<bool>();
+    ok(false, "get<wrong_type>() should raise an error");
+  } catch (std::runtime_error e) {
+    ok(true, "get<wrong_type>() should raise an error");
+  }
+
   done_testing();
 
   return success ? 0 : 1;
