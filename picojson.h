@@ -57,6 +57,8 @@ extern "C" {
 
 // experimental support for int64_t (see README.mkdn for detail)
 #ifdef PICOJSON_USE_INT64
+# define __STDC_FORMAT_MACROS
+# include <errno.h>
 # include <inttypes.h>
 #endif
 
@@ -1093,8 +1095,8 @@ int main(void)
   TEST("\"\\ud840\\udc0b\"", string, string("\xf0\xa0\x80\x8b"), false);
 #ifdef PICOJSON_USE_INT64
   TEST("0", int64_t, 0, true);
-  TEST("-9223372036854775808", int64_t, INT64_MIN, true);
-  TEST("9223372036854775807", int64_t, INT64_MAX, true);
+  TEST("-9223372036854775808", int64_t, std::numeric_limits<int64_t>::min(), true);
+  TEST("9223372036854775807", int64_t, std::numeric_limits<int64_t>::max(), true);
 #endif
 #undef TEST
 
