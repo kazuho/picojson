@@ -1,0 +1,10 @@
+Revision history for picojson
+
+1.1 2014-06-16 12:57:00+0900
+	- added experimental support for int64 type (#34)
+	- by default, throw std::runtime_error instead of using assert for runtime errors (#33)
+	- refine compatibility regarding the use of isinf/isnan (#29, #36)
+	- remove `.get<int>()` (#35)
+
+1.0 2014-06-05 12:54:00+0900
+	- initial release with a version number
