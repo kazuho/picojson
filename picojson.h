@@ -416,7 +416,7 @@ namespace picojson {
 	MAP('\t', "\\t");
 #undef MAP
       default:
-	if ((unsigned char)*i < 0x20 || *i == 0x7f) {
+	if (static_cast<unsigned char>(*i) < 0x20 || *i == 0x7f) {
 	  char buf[7];
 	  SNPRINTF(buf, sizeof(buf), "\\u%04x", *i & 0xff);
 	  copy(buf, buf + 6, oi);
