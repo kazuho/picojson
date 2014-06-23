@@ -59,7 +59,16 @@ extern "C" {
 #ifdef PICOJSON_USE_INT64
 # define __STDC_FORMAT_MACROS
 # include <errno.h>
-# include <inttypes.h>
+# if defined(_MSC_VER) && _MSC_VER == 1500
+typedef __int64 int64_t;
+typedef __int64 intmax_t;
+#  define PRId64 "I64d"
+#  define strtoimax _strtoi64
+# else
+extern "C" {
+#  include <inttypes.h>
+}
+# endif
 #endif
 
 // to disable the use of localeconv(3), set PICOJSON_USE_LOCALE to 0
@@ -390,9 +399,6 @@ namespace picojson {
     case array_type:     return "array";
     case object_type:    return "object";
     default:             PICOJSON_ASSERT(0);
-#ifdef _MSC_VER
-      __assume(0);
-#endif
     }
     return std::string();
   }
