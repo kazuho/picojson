@@ -81,8 +81,38 @@ extern "C" {
 }
 #endif
 
+
+#ifdef _MSC_VER
+# define PICOJSON_VCWARN_OFF(n)   \
+  __pragma(warning(push))         \
+  __pragma(warning(disable:n))
+# define PICOJSON_VCWARN_BACK     \
+  __pragma(warning(pop))
+#else
+# define PICOJSON_VCWARN_OFF(n)
+# define PICOJSON_VCWARN_BACK
+#endif
+
+#define PICOJSON_PPBLK_BEGIN do {
+#define PICOJSON_PPBLK_END \
+ PICOJSON_VCWARN_OFF(4127) \
+ } while (0)               \
+ PICOJSON_VCWARN_BACK       // 4127 = conditional expression is constant
+
+#define PICOJSON_FOREVER   \
+ PICOJSON_VCWARN_OFF(4127) \
+ while (1)                 \
+ PICOJSON_VCWARN_BACK       // 4127 = conditional expression is constant
+
 #ifndef PICOJSON_ASSERT
-# define PICOJSON_ASSERT(e) do { if (! (e)) throw std::runtime_error(#e); } while (0)
+# define PICOJSON_ASSERT(e)                  \
+  PICOJSON_PPBLK_BEGIN                       \
+  PICOJSON_VCWARN_OFF(4127)                  \
+  if (! (e))                                 \
+  PICOJSON_VCWARN_BACK                       \
+    throw std::runtime_error(#e);            \
+  PICOJSON_PPBLK_END        // 4127 = conditional expression is constant
+                            // needed for ASSERT("msg" && test) syntax
 #endif
 
 #ifdef _MSC_VER
@@ -558,7 +588,7 @@ namespace picojson {
     Iter cur() const { return cur_; }
     int line() const { return line_; }
     void skip_ws() {
-      while (1) {
+      PICOJSON_FOREVER {
 	int ch = getc();
 	if (! (ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r')) {
 	  ungetc();
@@ -650,7 +680,7 @@ namespace picojson {
   }
   
   template<typename String, typename Iter> inline bool _parse_string(String& out, input<Iter>& in) {
-    while (1) {
+    PICOJSON_FOREVER {
       int ch = in.getc();
       if (ch < ' ') {
 	in.ungetc();
@@ -727,7 +757,7 @@ namespace picojson {
   
   template <typename Iter> inline std::string _parse_number(input<Iter>& in) {
     std::string num_str;
-    while (1) {
+    PICOJSON_FOREVER {
       int ch = in.getc();
       if (('0' <= ch && ch <= '9') || ch == '+' || ch == '-'
           || ch == 'e' || ch == 'E') {
@@ -917,7 +947,7 @@ namespace picojson {
       char buf[64];
       SNPRINTF(buf, sizeof(buf), "syntax error at line %d near: ", in.line());
       *err = buf;
-      while (1) {
+      PICOJSON_FOREVER {
 	int ch = in.getc();
 	if (ch == -1 || ch == '\n') {
 	  break;
@@ -967,9 +997,6 @@ namespace picojson {
     PICOJSON_CMP(object);
 #undef PICOJSON_CMP
     PICOJSON_ASSERT(0);
-#ifdef _MSC_VER
-    __assume(0);
-#endif
     return false;
   }
   
@@ -1007,9 +1034,7 @@ inline std::ostream& operator<<(std::ostream& os, const picojson::value& x)
 
 #endif
 #ifdef TEST_PICOJSON
-#ifdef _MSC_VER
-    #pragma warning(disable : 4127) // conditional expression is constant
-#endif
+PICOJSON_VCWARN_OFF(4127)  // conditional expression is constant
 
 using namespace std;
   
@@ -1151,12 +1176,12 @@ int main(void)
     ok(!v.contains("z"), "check not contains property");
   }
 
-#define TEST(json, msg) do {				\
+#define TEST(json, msg) PICOJSON_PPBLK_BEGIN            \
     picojson::value v;					\
     const char *s = json;				\
     string err = picojson::parse(v, s, s + strlen(s));	\
     is(err, string("syntax error at line " msg), msg);	\
-  } while (0)
+  PICOJSON_PPBLK_END
   TEST("falsoa", "1 near: oa");
   TEST("{]", "1 near: ]");
   TEST("\n\bbell", "2 near: bell");
@@ -1277,7 +1302,7 @@ int main(void)
     ok(v1.is<double>(), "is double as well");
     ok(v1.serialize() == "123", "serialize the value");
     ok(v1.get<int64_t>() == 123, "value is correct as int64_t");
-    ok(v1.get<double>(), "value is correct as double");
+    ok(v1.get<double>() != 0., "value is correct as double");
 
     ok(! v1.is<int64_t>(), "is no more int64_type once get<double>() is called");
     ok(v1.is<double>(), "and is still a double");
@@ -1294,5 +1319,7 @@ int main(void)
 
   return success ? 0 : 1;
 }
+
+PICOJSON_VCWARN_BACK
 
 #endif
