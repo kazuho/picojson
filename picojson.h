@@ -59,15 +59,21 @@ extern "C" {
 #ifdef PICOJSON_USE_INT64
 # define __STDC_FORMAT_MACROS
 # include <errno.h>
-# if defined(_MSC_VER) && _MSC_VER == 1500
-typedef __int64 int64_t;
-typedef __int64 intmax_t;
-#  define PRId64 "I64d"
-#  define strtoimax _strtoi64
-# else
+# if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199900L
 extern "C" {
 #  include <inttypes.h>
 }
+# else // Pre-C99 compiler, need workaround
+#  ifdef _MSC_VER
+typedef __int64 int64_t;
+typedef __int64 intmax_t;
+#   define PRId64 "I64d"
+#   define strtoimax _strtoi64
+#  else // Unknown compiler, fallback to default
+extern "C" {
+#  include <inttypes.h>
+}
+#  endif
 # endif
 #endif
 
