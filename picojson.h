@@ -58,7 +58,7 @@ extern "C" {
 // experimental support for int64_t (see README.mkdn for detail)
 #ifdef PICOJSON_USE_INT64
 # include <errno.h>
-# if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199900L
+# if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
 #  define __STDC_FORMAT_MACROS
 extern "C" {
 #  include <inttypes.h>
