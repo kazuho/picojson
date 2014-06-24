@@ -57,9 +57,9 @@ extern "C" {
 
 // experimental support for int64_t (see README.mkdn for detail)
 #ifdef PICOJSON_USE_INT64
-# define __STDC_FORMAT_MACROS
 # include <errno.h>
 # if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199900L
+#  define __STDC_FORMAT_MACROS
 extern "C" {
 #  include <inttypes.h>
 }
@@ -70,6 +70,7 @@ typedef __int64 intmax_t;
 #   define PRId64 "I64d"
 #   define strtoimax _strtoi64
 #  else // Unknown compiler, fallback to default
+#  define __STDC_FORMAT_MACROS
 extern "C" {
 #  include <inttypes.h>
 }
