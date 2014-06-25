@@ -1,5 +1,9 @@
 Revision history for picojson
 
+1.1.1 2014-06-25 10:35:00+0900
+	- tweaks to suppress compiler errors / warning (#38 #39)
+	- clarify the licenses of the files in exmaple/ (#42)
+
 1.1 2014-06-16 12:57:00+0900
 	- added experimental support for int64 type (#34)
 	- by default, throw std::runtime_error instead of using assert for runtime errors (#33)
