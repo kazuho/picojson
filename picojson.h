@@ -85,11 +85,11 @@ extern "C" {
 #endif
 
 #ifdef _MSC_VER
-    #define SNPRINTF _snprintf_s
+    #define PICOJSON_SNPRINTF _snprintf_s
     #pragma warning(push)
     #pragma warning(disable : 4244) // conversion from int to char
 #else
-    #define SNPRINTF snprintf
+    #define PICOJSON_SNPRINTF snprintf
 #endif
 
 namespace picojson {
@@ -381,14 +381,14 @@ namespace picojson {
 #ifdef PICOJSON_USE_INT64
     case int64_type: {
       char buf[sizeof("-9223372036854775808")];
-      SNPRINTF(buf, sizeof(buf), "%" PICOJSON_PRId64, u_.int64_);
+      PICOJSON_SNPRINTF(buf, sizeof(buf), "%" PICOJSON_PRId64, u_.int64_);
       return buf;
     }
 #endif
     case number_type:    {
       char buf[256];
       double tmp;
-      SNPRINTF(buf, sizeof(buf), fabs(u_.number_) < (1ULL << 53) && modf(u_.number_, &tmp) == 0 ? "%.f" : "%.17g", u_.number_);
+      PICOJSON_SNPRINTF(buf, sizeof(buf), fabs(u_.number_) < (1ULL << 53) && modf(u_.number_, &tmp) == 0 ? "%.f" : "%.17g", u_.number_);
 #if PICOJSON_USE_LOCALE
       char *decimal_point = localeconv()->decimal_point;
       if (strcmp(decimal_point, ".") != 0) {
@@ -434,7 +434,7 @@ namespace picojson {
       default:
 	if (static_cast<unsigned char>(*i) < 0x20 || *i == 0x7f) {
 	  char buf[7];
-	  SNPRINTF(buf, sizeof(buf), "\\u%04x", *i & 0xff);
+	  PICOJSON_SNPRINTF(buf, sizeof(buf), "\\u%04x", *i & 0xff);
 	  copy(buf, buf + 6, oi);
 	  } else {
 	  *oi++ = *i;
@@ -929,7 +929,7 @@ namespace picojson {
     input<Iter> in(first, last);
     if (! _parse(ctx, in) && err != NULL) {
       char buf[64];
-      SNPRINTF(buf, sizeof(buf), "syntax error at line %d near: ", in.line());
+      PICOJSON_SNPRINTF(buf, sizeof(buf), "syntax error at line %d near: ", in.line());
       *err = buf;
       while (1) {
 	int ch = in.getc();
