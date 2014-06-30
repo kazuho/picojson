@@ -85,11 +85,11 @@ extern "C" {
 #endif
 
 #ifdef _MSC_VER
-    #define PICOJSON_SNPRINTF _snprintf_s
-    #pragma warning(push)
-    #pragma warning(disable : 4244) // conversion from int to char
+# define PICOJSON_SNPRINTF _snprintf_s
+# pragma warning(push, 3)
+# pragma warning(disable : 4244) // conversion from int to char
 #else
-    #define PICOJSON_SNPRINTF snprintf
+# define PICOJSON_SNPRINTF snprintf
 #endif
 
 namespace picojson {
@@ -1016,7 +1016,7 @@ inline std::ostream& operator<<(std::ostream& os, const picojson::value& x)
   return os;
 }
 #ifdef _MSC_VER
-    #pragma warning(pop)
+# pragma warning(pop)
 #endif
 
 #endif
