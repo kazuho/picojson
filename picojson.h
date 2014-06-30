@@ -57,9 +57,17 @@ extern "C" {
 
 // experimental support for int64_t (see README.mkdn for detail)
 #ifdef PICOJSON_USE_INT64
-# define __STDC_FORMAT_MACROS
 # include <errno.h>
-# include <inttypes.h>
+# if !(defined(_MSC_VER) && _MSC_VER <= 1500)
+#  define __STDC_FORMAT_MACROS
+extern "C" {
+#  include <inttypes.h>
+}
+#  define PICOJSON_PRId64 PRId64
+# else
+// Workarounds for known pre-C99 compilers implemented locally below
+#  define PICOJSON_PRId64 "I64d"
+# endif
 #endif
 
 // to disable the use of localeconv(3), set PICOJSON_USE_LOCALE to 0
@@ -101,6 +109,14 @@ namespace picojson {
   enum {
     INDENT_WIDTH = 2
   };
+
+#ifdef PICOJSON_USE_INT64
+# if defined(_MSC_VER) && _MSC_VER <= 1500
+  typedef __int64 int64_t;
+# else
+  typedef int64_t int64_t;
+# endif
+#endif
 
   struct null {};
   
@@ -365,7 +381,7 @@ namespace picojson {
 #ifdef PICOJSON_USE_INT64
     case int64_type: {
       char buf[sizeof("-9223372036854775808")];
-      SNPRINTF(buf, sizeof(buf), "%" PRId64, u_.int64_);
+      SNPRINTF(buf, sizeof(buf), "%" PICOJSON_PRId64, u_.int64_);
       return buf;
     }
 #endif
@@ -772,7 +788,11 @@ namespace picojson {
 #ifdef PICOJSON_USE_INT64
         {
           errno = 0;
+# if defined(_MSC_VER) && _MSC_VER <= 1500
+          __int64  ival = _strtoi64(num_str.c_str(), &endp, 10);
+# else
           intmax_t ival = strtoimax(num_str.c_str(), &endp, 10);
+# endif
           if (errno == 0
               && std::numeric_limits<int64_t>::min() <= ival
               && ival <= std::numeric_limits<int64_t>::max()
@@ -1001,9 +1021,6 @@ inline std::ostream& operator<<(std::ostream& os, const picojson::value& x)
 
 #endif
 #ifdef TEST_PICOJSON
-#ifdef _MSC_VER
-    #pragma warning(disable : 4127) // conditional expression is constant
-#endif
 
 using namespace std;
   
@@ -1094,9 +1111,9 @@ int main(void)
        string("a\xe3\x82\xaf\xe3\x83\xaa\xe3\x82\xb9"), false);
   TEST("\"\\ud840\\udc0b\"", string, string("\xf0\xa0\x80\x8b"), false);
 #ifdef PICOJSON_USE_INT64
-  TEST("0", int64_t, 0, true);
-  TEST("-9223372036854775808", int64_t, std::numeric_limits<int64_t>::min(), true);
-  TEST("9223372036854775807", int64_t, std::numeric_limits<int64_t>::max(), true);
+  TEST("0", picojson::int64_t, 0, true);
+  TEST("-9223372036854775808", picojson::int64_t, std::numeric_limits<picojson::int64_t>::min(), true);
+  TEST("9223372036854775807", picojson::int64_t, std::numeric_limits<picojson::int64_t>::max(), true);
 #endif
 #undef TEST
 
@@ -1266,19 +1283,19 @@ int main(void)
 
 #ifdef PICOJSON_USE_INT64
   {
-    picojson::value v1((int64_t)123);
-    ok(v1.is<int64_t>(), "is int64_t");
+    picojson::value v1((picojson::int64_t)123);
+    ok(v1.is<picojson::int64_t>(), "is int64_t");
     ok(v1.is<double>(), "is double as well");
     ok(v1.serialize() == "123", "serialize the value");
-    ok(v1.get<int64_t>() == 123, "value is correct as int64_t");
-    ok(v1.get<double>(), "value is correct as double");
+    ok(v1.get<picojson::int64_t>() == 123, "value is correct as int64_t");
+    ok(v1.get<double>() != 0., "value is correct as double");
 
-    ok(! v1.is<int64_t>(), "is no more int64_type once get<double>() is called");
+    ok(! v1.is<picojson::int64_t>(), "is no more int64_type once get<double>() is called");
     ok(v1.is<double>(), "and is still a double");
 
     const char *s = "-9223372036854775809";
     ok(picojson::parse(v1, s, s + strlen(s)).empty(), "parse underflowing int64_t");
-    ok(! v1.is<int64_t>(), "underflowing int is not int64_t");
+    ok(! v1.is<picojson::int64_t>(), "underflowing int is not int64_t");
     ok(v1.is<double>(), "underflowing int is double");
     ok(v1.get<double>() + 9.22337203685478e+18 < 65536, "double value is somewhat correct");
   }
