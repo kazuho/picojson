@@ -1249,10 +1249,17 @@ int main(void)
   }
 
   try {
-    picojson::value(NAN);
+    picojson::value v(std::numeric_limits<double>::quiet_NaN());
     ok(false, "should not accept NaN");
   } catch (std::overflow_error e) {
     ok(true, "should not accept NaN");
+  }
+
+  try {
+    picojson::value v(std::numeric_limits<double>::infinity());
+    ok(false, "should not accept infinity");
+  } catch (std::overflow_error e) {
+    ok(true, "should not accept infinity");
   }
 
   try {
