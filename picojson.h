@@ -80,6 +80,8 @@ extern "C" {
     #define SNPRINTF _snprintf_s
     #pragma warning(push)
     #pragma warning(disable : 4244) // conversion from int to char
+    #pragma warning(disable : 4127) // conditional expression is constant
+    #pragma warning(disable : 4702) // unreachable code
 #else
     #define SNPRINTF snprintf
 #endif
@@ -995,15 +997,9 @@ inline std::ostream& operator<<(std::ostream& os, const picojson::value& x)
   x.serialize(std::ostream_iterator<char>(os));
   return os;
 }
-#ifdef _MSC_VER
-    #pragma warning(pop)
-#endif
 
 #endif
 #ifdef TEST_PICOJSON
-#ifdef _MSC_VER
-    #pragma warning(disable : 4127) // conditional expression is constant
-#endif
 
 using namespace std;
   
@@ -1296,4 +1292,8 @@ int main(void)
   return success ? 0 : 1;
 }
 
+#endif
+
+#ifdef _MSC_VER
+    #pragma warning(pop)
 #endif
