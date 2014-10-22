@@ -108,7 +108,7 @@ namespace picojson {
   
   namespace defaults {
 
-    struct number_traits {
+    struct default_number_traits {
       typedef double value_type;
       static value_type default_value() { return 0.0; }
       static void construct(value_type &slot, value_type n) {
@@ -157,7 +157,7 @@ namespace picojson {
     };
 
     struct type_traits {
-      typedef number_traits number_traits;
+      typedef default_number_traits number_traits;
     };
 
   }
