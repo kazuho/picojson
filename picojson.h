@@ -129,6 +129,14 @@ namespace picojson {
       static bool evaluate_as_boolean(value_type n) {
         return n != 0;
       }
+      static std::pair<value_type, bool> from_str(const std::string& s) {
+        char *endp;
+        double f = strtod(s.c_str(), &endp);
+        if (endp == s.c_str() + s.size()) {
+          return std::make_pair(f, true);
+        }
+        return std::make_pair(0, false);
+      }
       static std::string to_str(value_type n) {
         char buf[256];
         double tmp;
@@ -846,8 +854,6 @@ namespace picojson {
       return _parse_object(ctx, in);
     default:
       if (('0' <= ch && ch <= '9') || ch == '-') {
-        double f;
-        char *endp;
 	in.ungetc();
         std::string num_str = _parse_number(in);
         if (num_str.empty()) {
@@ -856,6 +862,7 @@ namespace picojson {
 #ifdef PICOJSON_USE_INT64
         {
           errno = 0;
+          char *endp;
           intmax_t ival = strtoimax(num_str.c_str(), &endp, 10);
           if (errno == 0
               && std::numeric_limits<int64_t>::min() <= ival
@@ -866,12 +873,7 @@ namespace picojson {
           }
         }
 #endif
-        f = strtod(num_str.c_str(), &endp);
-        if (endp == num_str.c_str() + num_str.size()) {
-          ctx.set_number(f);
-          return true;
-        }
-        return false;
+        return ctx.set_number(num_str);
       }
       break;
     }
@@ -886,7 +888,7 @@ namespace picojson {
 #ifdef PICOJSON_USE_INT64
     bool set_int64(int64_t) { return false; }
 #endif
-    bool set_number(double) { return false; }
+    bool set_number(const std::string&) { return false; }
     template <typename Iter> bool parse_string(input<Iter>&) { return false; }
     bool parse_array_start() { return false; }
     template <typename Iter> bool parse_array_item(input<Iter>&, size_t) {
@@ -919,8 +921,11 @@ namespace picojson {
       return true;
     }
 #endif
-    bool set_number(double f) {
-      *out_ = value_t<TraitsT>(f);
+    bool set_number(const std::string& s) {
+      std::pair<typename TraitsT::number_traits::value_type, bool> t = TraitsT::number_traits::from_str(s);
+      if (! t.second)
+        return false;
+      *out_ = value_t<TraitsT>(t.first);
       return true;
     }
     template<typename Iter> bool parse_string(input<Iter>& in) {
@@ -965,7 +970,7 @@ namespace picojson {
 #ifdef PICOJSON_USE_INT64
     bool set_int64(int64_t) { return true; }
 #endif
-    bool set_number(double) { return true; }
+    bool set_number(const std::string&) { return true; }
     template <typename Iter> bool parse_string(input<Iter>& in) {
       dummy_str s;
       return _parse_string(s, in);
