@@ -15,7 +15,7 @@ PicoJSON is a tiny JSON parser / serializer for C++ with following properties:
 
 - header-file only
 - no external dependencies (only uses standard C++ libraries)
-- STL-frendly (arrays are represented by using std::vector, objects are std::map)
+- STL-friendly (arrays are represented by using std::vector, objects are std::map)
 - provides both pull interface and streaming (event-based) interface
 
 ## Reading JSON using the pull interface
