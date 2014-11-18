@@ -110,6 +110,10 @@ namespace picojson {
 
     struct default_number_traits {
       typedef double value_type;
+      typedef double return_type;
+      static return_type& to_return_type(double& t){
+        return t;
+      }
       static value_type default_value() { return 0.0; }
       static void construct(value_type &slot, value_type n) {
         if (
@@ -166,10 +170,11 @@ namespace picojson {
   public:
     typedef std::vector<value_t> array;
     typedef std::map<std::string, value_t> object;
+    typedef typename TraitsT::number_traits::value_type value;
     union _storage {
       null null_;
       bool boolean_;
-      typename TraitsT::number_traits::value_type number_;
+      value number_;
 #ifdef PICOJSON_USE_INT64
       int64_t int64_;
 #endif
@@ -187,7 +192,7 @@ namespace picojson {
 #ifdef PICOJSON_USE_INT64
     explicit value_t(int64_t i);
 #endif
-    explicit value_t(const typename TraitsT::number_traits::value_type& n);
+    explicit value_t(const value& n);
     explicit value_t(const std::string& s);
     explicit value_t(const array& a);
     explicit value_t(const object& o);
@@ -255,7 +260,7 @@ namespace picojson {
 #endif
 
   template <typename TraitsT>
-  inline value_t<TraitsT>::value_t(const typename TraitsT::number_traits::value_type& n)
+  inline value_t<TraitsT>::value_t(const value& n)
   : type_(number_type) {
     TraitsT::number_traits::construct(u_.number_, n);
   }
@@ -355,11 +360,11 @@ namespace picojson {
   ACCESSOR(int64_t, int64, u.int64_);
 #endif
   ACCESSOR(std::string, string, *u.string_);
-  ACCESSOR(array, array, *u.array_);
-  ACCESSOR(object, object, *u.object_);
+  ACCESSOR(typename value_t<TraitsT>::array, array, *u.array_);
+  ACCESSOR(typename value_t<TraitsT>::object, object, *u.object_);
 #undef IS
   template <typename TraitsT>
-  struct _accessor<TraitsT, typename TraitsT::number_traits::value_type> { \
+  struct _accessor<TraitsT, typename TraitsT::number_traits::return_type> { \
     static bool is(int type) {
       return type == number_type
 #ifdef PICOJSON_USE_INT64
@@ -367,7 +372,7 @@ namespace picojson {
 #endif
         ;
     }
-    static typename TraitsT::number_traits::value_type& get(int& type, typename value_t<TraitsT>::_storage& u) {
+    static typename TraitsT::number_traits::return_type& get(int& type, typename value_t<TraitsT>::_storage& u) {
       PICOJSON_ASSERT("type mismatch! call is<type>() before get<type>()"
         && is(type));
 #ifdef PICOJSON_USE_INT64
@@ -376,7 +381,7 @@ namespace picojson {
         TraitsT::number_traits::construct(u.number_, u.int64_);
       }
 #endif
-      return u.number_;
+      return TraitsT::number_traits::to_return_type(u.number_);
     }
   };
 
@@ -937,7 +942,7 @@ namespace picojson {
       return true;
     }
     template <typename Iter> bool parse_array_item(input<Iter>& in, size_t) {
-      array& a = out_->template get<array>();
+      typename value_t<TraitsT>::array& a = out_->template get<typename value_t<TraitsT>::array>();
       a.push_back(value_t<TraitsT>());
       default_parse_context_t ctx(&a.back());
       return _parse(ctx, in);
@@ -948,7 +953,7 @@ namespace picojson {
       return true;
     }
     template <typename Iter> bool parse_object_item(input<Iter>& in, const std::string& key) {
-      object& o = out_->template get<object>();
+      typename value_t<TraitsT>::object& o = out_->template get<typename value_t<TraitsT>::object>();
       default_parse_context_t ctx(&o[key]);
       return _parse(ctx, in);
     }
@@ -1049,10 +1054,10 @@ namespace picojson {
     if (x.template is<type>())						\
       return y.template is<type>() && x.template get<type>() == y.template get<type>()
     PICOJSON_CMP(bool);
-    PICOJSON_CMP(double);
+    PICOJSON_CMP(typename value_t<TraitsT>::value);
     PICOJSON_CMP(std::string);
-    PICOJSON_CMP(array);
-    PICOJSON_CMP(object);
+    PICOJSON_CMP(typename value_t<TraitsT>::array);
+    PICOJSON_CMP(typename value_t<TraitsT>::object);
 #undef PICOJSON_CMP
     PICOJSON_ASSERT(0);
 #ifdef _MSC_VER
