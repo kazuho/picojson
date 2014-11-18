@@ -50,8 +50,8 @@ int main(void)
     std::cout << "input is null" << std::endl;
   } else if (v.is<bool>()) {
     std::cout << "input is " << (v.get<bool>() ? "true" : "false") << std::endl;
-  } else if (v.is<gmp_value::value>()) {
-    std::cout << "input is " << *v.get<gmp_value::value>() << std::endl;
+  } else if (v.is<string_large_int>()) {
+    std::cout << "input is " << v.get<string_large_int>() << std::endl;
   } else if (v.is<std::string>()) {
     std::cout << "input is " << v.get<std::string>() << std::endl;
   } else if (v.is<gmp_value::array>()) {
