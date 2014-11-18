@@ -5,21 +5,21 @@
 #include <gmpxx.h>
 #include <sstream>
 
-class string_large_int
+class gmp_double_pair
 {
     mpz_class large_int;
     double value;
     bool use_double;
 public:
-    string_large_int()
+    gmp_double_pair()
     : value(0), use_double(true)
     { }
     
-    explicit string_large_int(double d)
+    explicit gmp_double_pair(double d)
     : value(d), use_double(true)
     { }    
     
-    explicit string_large_int(const mpz_class& bigint)
+    explicit gmp_double_pair(const mpz_class& bigint)
     : large_int(bigint), value(0), use_double(false)
     { }
     
@@ -31,16 +31,16 @@ public:
             return large_int == 0;
     }
     
-    static std::pair<string_large_int*, bool> from_str_double(const std::string& s)
+    static std::pair<gmp_double_pair*, bool> from_str_double(const std::string& s)
     {
         char* endp;
         double f = strtod(s.c_str(), &endp);
         if(endp == s.c_str() + s.size()) {
-            return std::make_pair(new string_large_int(f), true);
+            return std::make_pair(new gmp_double_pair(f), true);
         }
-        return std::make_pair(new string_large_int(0.0), false);
+        return std::make_pair(new gmp_double_pair(0.0), false);
     }
-    static std::pair<string_large_int*, bool> from_str(const std::string& s)
+    static std::pair<gmp_double_pair*, bool> from_str(const std::string& s)
     {
         if(s.find(".") != std::string::npos)
         {
@@ -55,7 +55,7 @@ public:
                 int loc = s.find_first_of("eE");
                 if(loc == std::string::npos)
                 {
-                    return std::make_pair(new string_large_int(mpz_class(s)), true);
+                    return std::make_pair(new gmp_double_pair(mpz_class(s)), true);
                 }
                 
                 std::string arg1(s.begin(), s.begin() + loc);
@@ -80,10 +80,10 @@ public:
                 mpz_class exponent;
                 mpz_ui_pow_ui(exponent.get_mpz_t(), 10, longexp);
                 mpz_class result = mpz_class(arg1) * exponent;
-                return std::make_pair(new string_large_int(result), true);
+                return std::make_pair(new gmp_double_pair(result), true);
             }
             catch(std::invalid_argument)
-            { return std::make_pair(new string_large_int(0.0), false); }
+            { return std::make_pair(new gmp_double_pair(0.0), false); }
         }
     }
     
@@ -104,7 +104,7 @@ public:
         }   
     }
     
-    friend std::ostream& operator<<(std::ostream& o, const string_large_int& s)
+    friend std::ostream& operator<<(std::ostream& o, const gmp_double_pair& s)
     {
         if(s.use_double)
             return o << s.value;
@@ -112,7 +112,7 @@ public:
             return o << s.large_int;
     }
     
-    friend bool operator==(const string_large_int& lhs, const string_large_int& rhs)
+    friend bool operator==(const gmp_double_pair& lhs, const gmp_double_pair& rhs)
     {
         if(lhs.use_double != rhs.use_double)
             return false;
@@ -150,5 +150,5 @@ struct wrap_number_traits {
 };
 
 struct large_int_type_traits {
-  typedef wrap_number_traits<string_large_int> number_traits;
+  typedef wrap_number_traits<gmp_double_pair> number_traits;
 };

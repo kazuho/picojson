@@ -46,9 +46,9 @@ int main(void)
   mpz_class hugeint(hugestr);
   TEST( (true),  "true");
   TEST( (false), "false");
-  TEST( (new string_large_int(42.0)),   "42");
-  TEST( (new string_large_int(42)),   "42");
-  TEST( (new string_large_int(hugeint)), hugestr);
+  TEST( (new gmp_double_pair(42.0)),   "42");
+  TEST( (new gmp_double_pair(42)),   "42");
+  TEST( (new gmp_double_pair(hugeint)), hugestr);
   TEST( (string("hello")), "\"hello\"");
   TEST( ("hello"), "\"hello\"");
   TEST( ("hello", 4), "\"hell\"");
@@ -69,9 +69,9 @@ int main(void)
   }
   TEST("false", bool, false, true);
   TEST("true", bool, true, true);
-  TEST("90.5", string_large_int, string_large_int(90.5), false);
-  TEST("90", string_large_int, string_large_int(mpz_class("90")), false);
-  TEST(hugestr, string_large_int, string_large_int(hugeint), false);
+  TEST("90.5", gmp_double_pair, gmp_double_pair(90.5), false);
+  TEST("90", gmp_double_pair, gmp_double_pair(mpz_class("90")), false);
+  TEST(hugestr, gmp_double_pair, gmp_double_pair(hugeint), false);
 #undef TEST
 
   done_testing();
