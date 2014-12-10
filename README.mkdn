@@ -20,7 +20,7 @@ PicoJSON is a tiny JSON parser / serializer for C++ with following properties:
 
 ## Reading JSON using the pull interface
 
-There are three ways to use the pull (DOM-like) interface of picojson.  You can use operator&lt;&lt;, you can alternatively specifya set of iterators specifying the range from where the JSON stream should be read, or just pass the the raw null-terminated json string.
+There are three ways to use the pull (DOM-like) interface of picojson.  You can use operator&lt;&lt;, you can alternatively specify a set of iterators specifying the range from where the JSON stream should be read, or just pass a raw null-terminated json string.
 
 <pre>
 picojson::value v;
