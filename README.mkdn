@@ -54,8 +54,8 @@ if (! err.empty()) {
 <pre>
 const char* json = "{\"a\":1}";
 picojson::value v;
-std::string err;
 picojson::parse(v, json);
+std::string err = picojson::get_last_error();
 if (! err.empty()) {
   std::cerr &lt;&lt; err &lt;&lt; std::endl;
 }
