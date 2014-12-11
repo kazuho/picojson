@@ -296,5 +296,17 @@ int main(void)
   }
 #endif
 
+  {
+    picojson::value v;
+    std::string err = picojson::parse(v, "[ 1, \"abc\" ]");
+    _ok(err.empty(), "simple API no error");
+    _ok(v.is<picojson::array>(), "simple API return type is array");
+    is(v.get<picojson::array>().size(), 2, "simple API array size");
+    _ok(v.get<picojson::array>()[0].is<double>(), "simple API type #0");
+    is(v.get<picojson::array>()[0].get<double>(), 1, "simple API value #0");
+    _ok(v.get<picojson::array>()[1].is<std::string>(), "simple API type #1");
+    is(v.get<picojson::array>()[1].get<std::string>(), "abc", "simple API value #1");
+  }
+
   return done_testing();
 }

@@ -930,6 +930,12 @@ namespace picojson {
     return _parse(ctx, first, last, err);
   }
   
+  inline std::string parse(value& out, const std::string& s) {
+    std::string err;
+    parse(out, s.begin(), s.end(), &err);
+    return err;
+  }
+
   inline std::string parse(value& out, std::istream& is) {
     std::string err;
     parse(out, std::istreambuf_iterator<char>(is.rdbuf()),
