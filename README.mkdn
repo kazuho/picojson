@@ -20,36 +20,48 @@ PicoJSON is a tiny JSON parser / serializer for C++ with following properties:
 
 ## Reading JSON using the pull interface
 
-There are two ways to use the pull (DOM-like) interface of picojson.  One is to use operator&lt;&lt;, and the other is by specifying a set of iterators specifying the range from where the JSON stream should be read.
+There are several ways to use the pull (DOM-like) interface of picojson.
 
-<pre>
+The easiest way is to use the two-argument `parse` function.
+
+```
+std::string json = "[ \"hello JSON\" ]";
 picojson::value v;
-std::cin &gt;&gt; v;
-std::string err = picojson::get_last_error();
+std::string err = picojson::parse(v, json);
 if (! err.empty()) {
-  std::cerr &lt;&lt; err &lt;&lt; std::endl;
+  std:cerr << err << std::endl;
 }
-</pre>
+```
 
-<pre>
-std::istream_iterator input(cin);
+Four-argument `parse` function accepts a pair of iterators, and returns the end position of the input.
+
+```
+const char* json = "{\"a\":1}";
+picojson::value v;
+std::string err;
+const char* json_end = picojson::parse(v, json, json + strlen(json), &err);
+if (! err.empty()) {
+  std::cerr << err << std::endl;
+}
+```
+
+```
+std::istream_iterator input(std::cin);
 picojson::value v;
 std::string err;
 input = picojson::parse(v, input, std::istream_iterator(), &err);
 if (! err.empty()) {
-  std::cerr &lt;&lt; err &lt;&lt; std::endl;
+  std::cerr << err << std::endl;
 }
-</pre>
+```
 
-<pre>
-const char* json = "{\"a\":1}";
-picojson::value v;
-std::string err;
-picojson::parse(v, json, json + strlen(json), &err);
-if (! err.empty()) {
-  std::cerr &lt;&lt; err &lt;&lt; std::endl;
-}
-</pre>
+It is also possible to use the `>>` operator to parse the input, however this interface is not thread-safe.
+
+```
+picosjon::value v;
+std::cin >> v;
+std::string err = picojson::get_last_error();
+```
 
 ## Accessing the values
 
