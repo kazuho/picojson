@@ -38,6 +38,7 @@
 #include <map>
 #include <stdexcept>
 #include <string>
+#include <sstream>
 #include <vector>
 
 // for isnan/isinf
@@ -935,6 +936,11 @@ namespace picojson {
     parse(out, std::istreambuf_iterator<char>(is.rdbuf()),
 	  std::istreambuf_iterator<char>(), &err);
     return err;
+  }
+  
+  inline std::string parse(value& out, const char* str) {
+	  std::istringstream is(str);
+	  return parse(out, is);
   }
   
   template <typename T> struct last_error_t {
