@@ -1,5 +1,9 @@
 Revision history for picojson
 
+1.2.0 2014-12-15 16:20:00+0900
+	- `make install` to install picojson.h (#58)
+	- two-argument `picojson::parse()` for ease-of-use (#57)
+
 1.1.1 2014-06-25 10:35:00+0900
 	- tweaks to suppress compiler errors / warning (#38 #39)
 	- clarify the licenses of the files in exmaple/ (#42)
