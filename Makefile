@@ -1,12 +1,20 @@
 prefix=/usr/local
 includedir=$(prefix)/include
 
-test:
-	$(MAKE) test-core
-	$(MAKE) test-core TEST_OPTS=-DPICOJSON_USE_INT64
+check: test
 
-test-core:
-	$(CXX) -o test-core -Wall $(TEST_OPTS) test.cc picotest/picotest.c && ./test-core
+test: test-core test-core-int64
+	./test-core
+	./test-core-int64
+
+test-core: test.cc picotest/picotest.c picotest/picotest.h
+	$(CXX) -Wall test.cc picotest/picotest.c -o $@
+
+test-core-int64: test.cc picotest/picotest.c picotest/picotest.h
+	$(CXX) -Wall -DPICOJSON_USE_INT64 test.cc picotest/picotest.c -o $@
+
+clean:
+	rm -f test-core test-core-int64
 
 install:
 	install -d $(DESTDIR)$(includedir)
@@ -15,4 +23,4 @@ install:
 uninstall:
 	rm -f $(DESTDIR)$(includedir)/picojson.h
 
-.PHONY: test test-core install uninstall
+.PHONY: test check clean install uninstall
