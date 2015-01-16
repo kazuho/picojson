@@ -138,7 +138,7 @@ int main(void)
   
   {
     picojson::value v;
-    const char *s = "{ \"a\": true }";
+    const char *s = "{\"a\":true}";
     string err = picojson::parse(v, s, s + strlen(s));
     _ok(err.empty(), "object no error");
     _ok(v.is<picojson::object>(), "object check type");
@@ -298,14 +298,24 @@ int main(void)
 
   {
     picojson::value v;
-    std::string err = picojson::parse(v, "[ 1, \"abc\" ]");
+    std::string array_str = "[ 1, \"abc\" ]";
+    std::string err = picojson::parse(v, array_str);
     _ok(err.empty(), "simple API no error");
     _ok(v.is<picojson::array>(), "simple API return type is array");
     is(v.get<picojson::array>().size(), 2, "simple API array size");
     _ok(v.get<picojson::array>()[0].is<double>(), "simple API type #0");
     is(v.get<picojson::array>()[0].get<double>(), 1, "simple API value #0");
     _ok(v.get<picojson::array>()[1].is<std::string>(), "simple API type #1");
-    is(v.get<picojson::array>()[1].get<std::string>(), "abc", "simple API value #1");
+  }
+
+  {
+   picojson::value v;
+   std::string json = "{\"foo\":[1,2,\"abc\"]}";
+
+   picojson::parse(v, json);
+
+   std::string err = picojson::parse(v, v.to_str());
+   _ok(err.empty(), "complex object to_str() API");
   }
 
   return done_testing();

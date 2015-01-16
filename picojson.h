@@ -388,9 +388,25 @@ namespace picojson {
 #endif
       return buf;
     }
-    case string_type:    return *u_.string_;
-    case array_type:     return "array";
-    case object_type:    return "object";
+    case string_type:    return "\""+*u_.string_+"\"";
+    case array_type:  {
+                        std::string output;
+                        for(auto i : get<array>()) {
+                          output+= i.to_str() + ",";
+                        }
+                        output = output.substr(0, output.length() - 1);
+                        output = "[" + output + "]";
+                        return output;
+                      }
+    case object_type: {
+                        std::string output;
+                        for(auto i : get<object>()) {
+                          output += "\""+ i.first + "\":" + i.second.to_str() + ",";
+                        }
+                        output = output.substr(0, output.length() - 1);
+                        output = "{" + output + "}";
+                        return output;
+                      }
     default:             PICOJSON_ASSERT(0);
 #ifdef _MSC_VER
       __assume(0);
