@@ -253,8 +253,8 @@ namespace picojson {
   
   inline value& value::operator=(const value& x) {
     if (this != &x) {
-      this->~value();
-      new (this) value(x);
+      value t(x);
+      swap(t);
     }
     return *this;
   }
