@@ -1,5 +1,9 @@
 Revision history for picojson
 
+1.2.2 2015-02-25 13:05:00+0900
+	- `make check` is now synonym of `make test` (#62)
+	- operator= is now safe when part of LHS is being assigned, as well as exception-safe (#66)
+
 1.2.1 2014-12-16 15:33:00+0900
 	- bundle the contents of `picotest/` (#61)
 
