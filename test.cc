@@ -308,5 +308,18 @@ int main(void)
     is(v.get<picojson::array>()[1].get<std::string>(), "abc", "simple API value #1");
   }
 
+  {
+    picojson::value v1((double) 0);
+    _ok(! v1.evaluate_as_boolean(), "((double) 0) is false");
+    picojson::value v2((double) 1);
+    _ok(v2.evaluate_as_boolean(), "((double) 1) is true");
+#ifdef PICOJSON_USE_INT64
+    picojson::value v3((int64_t) 0);
+    _ok(! v3.evaluate_as_boolean(), "((int64_t) 0) is false");
+    picojson::value v4((int64_t) 1);
+    _ok(v4.evaluate_as_boolean(), "((int64_t) 1) is true");
+#endif
+  }
+
   return done_testing();
 }
