@@ -317,6 +317,10 @@ namespace picojson {
       return u_.boolean_;
     case number_type:
       return u_.number_ != 0;
+#ifdef PICOJSON_USE_INT64
+    case int64_type:
+      return u_.int64_ != 0;
+#endif
     case string_type:
       return ! u_.string_->empty();
     default:
