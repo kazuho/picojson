@@ -1,0 +1,37 @@
+-------------------------------------------------------------------
+Thu Oct  8 19:56:10 UTC 2015 - kapil@ccs.neu.edu
+
+- Updated to new upstream release v1.3.0 that fixes make test.
+- Upstream Release Notes:
+  - make check is now synonym of make test (#62)
+  - operator= is now safe when part of LHS is being assigned, as well as
+    exception-safe (#66)
+
+-------------------------------------------------------------------
+Tue Dec 16 13:01:03 UTC 2014 - kapil@ccs.neu.edu
+
+- Updated to new upstream release v1.2.1 that fixes make test.
+
+-------------------------------------------------------------------
+Mon Dec 15 12:36:52 UTC 2014 - kapil@ccs.neu.edu
+
+- The upstream tarball is missing some files required for tests;
+  we disable the tests until the next release (that will include
+  all required files).
+
+-------------------------------------------------------------------
+Mon Dec 15 12:25:47 UTC 2014 - kapil@ccs.neu.edu
+
+- Updated to upstream release 1.2.0.
+
+-------------------------------------------------------------------
+Thu Dec 11 23:14:52 UTC 2014 - jengelh@inai.de
+
+- Cleanups: Remove BuildRequires for implicit packages. Add missing
+  %defattr line. Add upstream project metadata into the spec file.
+  Reword description a bit (more prose-y).
+
+-------------------------------------------------------------------
+Wed Dec 10 23:26:35 UTC 2014 - kapil@ccs.neu.edu
+
+- Initial picojson package (version 1.1.2) for OpenSUSE.
