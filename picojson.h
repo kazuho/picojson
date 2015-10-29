@@ -529,34 +529,35 @@ namespace picojson {
   template <typename Iter> class input {
   protected:
     Iter cur_, end_;
-    int last_ch_;
-    bool ungot_;
+    bool consumed_;
     int line_;
   public:
-    input(const Iter& first, const Iter& last) : cur_(first), end_(last), last_ch_(-1), ungot_(false), line_(1) {}
+    input(const Iter& first, const Iter& last) : cur_(first), end_(last), consumed_(false), line_(1) {}
     int getc() {
-      if (ungot_) {
-	ungot_ = false;
-	return last_ch_;
+      if (consumed_) {
+        if (*cur_ == '\n') {
+          ++line_;
+        }
+        ++cur_;
       }
       if (cur_ == end_) {
-	last_ch_ = -1;
-	return -1;
+        consumed_ = false;
+        return -1;
       }
-      if (last_ch_ == '\n') {
-	line_++;
-      }
-      last_ch_ = *cur_ & 0xff;
-      ++cur_;
-      return last_ch_;
+      consumed_ = true;
+      return *cur_ & 0xff;
     }
     void ungetc() {
-      if (last_ch_ != -1) {
-	PICOJSON_ASSERT(! ungot_);
-	ungot_ = true;
-      }
+      consumed_ = false;
     }
-    Iter cur() const { return cur_; }
+    Iter cur() const {
+      if (consumed_) {
+        input<Iter> *self = const_cast<input<Iter>*>(this);
+        self->consumed_ = false;
+        ++self->cur_;
+      }
+      return cur_;
+    }
     int line() const { return line_; }
     void skip_ws() {
       while (1) {
