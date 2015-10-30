@@ -274,14 +274,12 @@ namespace picojson {
   }
 
 #if PICOJSON_USE_RVALUE_REFERENCE 
-  value::value(value&& x) : type_(null_type)
-  {
-	  swap(x);
+  inline value::value(value&& x) : type_(null_type) {
+    swap(x);
   }
-  value& value::operator=(value&& x)
-  {
-	  swap(x);
-	  return *this;
+  value& value::operator=(value&& x) {
+    swap(x);
+    return *this;
   }
 #endif
   inline void value::swap(value& x) {
