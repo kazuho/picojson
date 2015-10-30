@@ -56,12 +56,13 @@ extern "C" {
 }
 #endif
 
-#if __cpp_rvalue_references >= 200610
-#define PICOJSON_USE_RVALUE_REFERENCE
-#endif
-#if defined(_MSC_VER) && _MSC_VER >= 1600
-#define PICOJSON_USE_RVALUE_REFERENCE
-#endif
+#ifndef PICOJSON_USE_RVALUE_REFERENCE
+# if (defined(__cpp_rvalue_references) && __cpp_rvalue_references >= 200610) || (defined(_MSC_VER) && _MSC_VER >= 1600)
+#  define PICOJSON_USE_RVALUE_REFERENCE 1
+# else
+#  define PICOJSON_USE_RVALUE_REFERENCE 0
+# endif
+#endif//PICOJSON_USE_RVALUE_REFERENCE
 
 
 // experimental support for int64_t (see README.mkdn for detail)
@@ -148,9 +149,9 @@ namespace picojson {
     ~value();
     value(const value& x);
     value& operator=(const value& x);
-#ifdef PICOJSON_USE_RVALUE_REFERENCE 
-	value(value&& x);
-	value& operator=(value&& x);
+#if PICOJSON_USE_RVALUE_REFERENCE 
+    value(value&& x);
+    value& operator=(value&& x);
 #endif
     void swap(value& x);
     template <typename T> bool is() const;
@@ -272,7 +273,7 @@ namespace picojson {
     return *this;
   }
 
-  #ifdef PICOJSON_USE_RVALUE_REFERENCE 
+#if PICOJSON_USE_RVALUE_REFERENCE 
   value::value(value&& x) : type_(null_type)
   {
 	  swap(x);
@@ -282,7 +283,7 @@ namespace picojson {
 	  swap(x);
 	  return *this;
   }
-  #endif
+#endif
   inline void value::swap(value& x) {
     std::swap(type_, x.type_);
     std::swap(u_, x.u_);
