@@ -150,10 +150,10 @@ namespace picojson {
     value(const value& x);
     value& operator=(const value& x);
 #if PICOJSON_USE_RVALUE_REFERENCE 
-    value(value&& x);
-    value& operator=(value&& x);
+    value(value&& x)throw();
+    value& operator=(value&& x)throw();
 #endif
-    void swap(value& x);
+    void swap(value& x)throw();
     template <typename T> bool is() const;
     template <typename T> const T& get() const;
     template <typename T> T& get();
@@ -274,15 +274,15 @@ namespace picojson {
   }
 
 #if PICOJSON_USE_RVALUE_REFERENCE 
-  inline value::value(value&& x) : type_(null_type) {
+  inline value::value(value&& x)throw() : type_(null_type) {
     swap(x);
   }
-  value& value::operator=(value&& x) {
+  value& value::operator=(value&& x)throw() {
     swap(x);
     return *this;
   }
 #endif
-  inline void value::swap(value& x) {
+  inline void value::swap(value& x)throw() {
     std::swap(type_, x.type_);
     std::swap(u_, x.u_);
   }
@@ -1007,12 +1007,14 @@ namespace picojson {
   }
 }
 
+#if !PICOJSON_USE_RVALUE_REFERENCE 
 namespace std {
   template<> inline void swap(picojson::value& x, picojson::value& y)
     {
       x.swap(y);
     }
 }
+#endif
 
 inline std::istream& operator>>(std::istream& is, picojson::value& x)
 {
