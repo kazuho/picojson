@@ -277,7 +277,7 @@ namespace picojson {
   inline value::value(value&& x)throw() : type_(null_type) {
     swap(x);
   }
-  value& value::operator=(value&& x)throw() {
+  inline value& value::operator=(value&& x)throw() {
     swap(x);
     return *this;
   }
