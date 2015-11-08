@@ -321,5 +321,13 @@ int main(void)
 #endif
   }
 
+  {
+    picojson::value v;
+    std::string err;
+    const char *s = "[1]X";
+    const char *reststr = picojson::parse(v, s, s + strlen(s), &err);
+    is(*reststr, 'X', "parse function doesn't consume last char");
+  }
+ 
   return done_testing();
 }

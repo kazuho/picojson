@@ -578,7 +578,15 @@ namespace picojson {
 	ungot_ = true;
       }
     }
-    Iter cur() const { return cur_; }
+    Iter cur() const {
+      if (ungot_) {
+	Iter ret(cur_);
+	std::advance(ret, -1);
+	return ret;
+      } else {
+	return cur_;
+      }
+    }
     int line() const { return line_; }
     void skip_ws() {
       while (1) {
