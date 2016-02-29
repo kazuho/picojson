@@ -321,5 +321,16 @@ int main(void)
 #endif
   }
 
+  {
+    picojson::value v;
+    std::string err;
+    const char *s = "123abc";
+    const char *reststr = picojson::parse(v, s, s + strlen(s), &err);
+    _ok(err.empty(), "should succeed");
+    _ok(v.is<double>(), "is number");
+    _ok(v.get<double>() == 123.0, "is 123");
+    is(*reststr, 'a', "should point at the next char");
+  }
+
   return done_testing();
 }
