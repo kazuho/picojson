@@ -332,5 +332,25 @@ int main(void)
     is(*reststr, 'a', "should point at the next char");
   }
 
+  {
+    picojson::value v;
+    const char *s = "{ \"a\": [1,\"str\"] , \"b\": true ,\"o\":{\"o\":{\"v\": true}}}";
+    string err = picojson::parse(v, s, s + strlen(s));
+    _ok(err.empty(), "object no error");
+    _ok(v.is<picojson::object>(), "object check type");
+    _ok(v.contains("a"), "check contains property");
+    is(v.get("b").opt(false), true, "check bool property value");
+    is(v.get("c").opt(true), true, "check not contains property fallback value");
+    is(v.get("c").opt(false), false, "check not contains property fallback value");
+
+    is(v["o"]["o"]["v"].opt(false), true, "check bool property value");
+    is(v["b"]["o"]["v"].opt(true), true, "check not contains property fallback value");
+    is(v["c"]["o"]["v"].opt(true), true, "check not contains property fallback value");
+    is(v["c"]["o"]["v"].opt(false), false, "check not contains property fallback value");
+    is(v["a"][0].is<double>(), true, "check a[0] type");
+    is(v["a"][1].is<string>(), true, "check a[1] type");
+    is(v["b"][3].opt(true), true, "check not contains property fallback value");
+  }
+
   return done_testing();
 }
