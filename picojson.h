@@ -432,8 +432,8 @@ namespace picojson {
   
   template <typename Iter> void serialize_str(const std::string& s, Iter oi) {
     *oi++ = '"';
-    for (std::string::const_iterator i = s.begin(); i != s.end(); ++i) {
-      switch (*i) {
+    std::for_each(s.begin(), s.end(), [&](char c) {
+      switch (c) {
 #define MAP(val, sym) case val: copy(sym, oi); break
 	MAP('"', "\\\"");
 	MAP('\\', "\\\\");
@@ -445,16 +445,16 @@ namespace picojson {
 	MAP('\t', "\\t");
 #undef MAP
       default:
-	if (static_cast<unsigned char>(*i) < 0x20 || *i == 0x7f) {
+	if (static_cast<unsigned char>(c) < 0x20 || c == 0x7f) {
 	  char buf[7];
-	  SNPRINTF(buf, sizeof(buf), "\\u%04x", *i & 0xff);
+	  SNPRINTF(buf, sizeof(buf), "\\u%04x", c & 0xff);
 	  copy(buf, buf + 6, oi);
 	  } else {
-	  *oi++ = *i;
+	  *oi++ = c;
 	}
 	break;
       }
-    }
+    });
     *oi++ = '"';
   }
 
