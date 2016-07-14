@@ -150,6 +150,18 @@ int main(void)
     _ok(!v.contains("z"), "check not contains property");
   }
 
+  {
+    picojson::value v1;
+  	v1.set<picojson::object>(picojson::object());
+  	v1.get<picojson::object>()["114"] = picojson::value("514");
+  	v1.get<picojson::object>()["364"].set<picojson::array>(picojson::array());
+  	v1.get<picojson::object>()["364"].get<picojson::array>().push_back(picojson::value(334.0));
+  	picojson::value &v2 = v1.get<picojson::object>()["1919"];
+  	v2.set<picojson::object>(picojson::object());
+  	v2.get<picojson::object>()["893"] = picojson::value(810.0);
+    is(v1.serialize(), string("{\"114\":\"514\",\"1919\":{\"893\":810},\"364\":[334]}"), "modification succeed");
+  }
+
 #define TEST(json, msg) do {				\
     picojson::value v;					\
     const char *s = json;				\
