@@ -357,7 +357,7 @@ namespace picojson {
 #endif
 #undef SET
 
-#ifdef PICOJSON_USE_RVALUE_REFERENCE
+#if PICOJSON_USE_RVALUE_REFERENCE
 #define MOVESET(ctype, jtype, setter)       \
   template <> inline void value::set<ctype>(ctype &&_val) {     \
     clear();                      \
