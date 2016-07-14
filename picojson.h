@@ -40,6 +40,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <utility>
 
 // for isnan/isinf
 #if __cplusplus>=201103L
@@ -157,6 +158,10 @@ namespace picojson {
     template <typename T> bool is() const;
     template <typename T> const T& get() const;
     template <typename T> T& get();
+    template <typename T> void set(const T &);
+#if PICOJSON_USE_RVALUE_REFERENCE
+    template <typename T> void set(T &&);
+#endif
     bool evaluate_as_boolean() const;
     const value& get(size_t idx) const;
     const value& get(const std::string& key) const;
@@ -173,6 +178,7 @@ namespace picojson {
     template <typename Iter> static void _indent(Iter os, int indent);
     template <typename Iter> void _serialize(Iter os, int indent) const;
     std::string _serialize(int indent) const;
+    void clear();
   };
   
   typedef value::array array;
@@ -240,8 +246,8 @@ namespace picojson {
   inline value::value(const char* s, size_t len) : type_(string_type) {
     u_.string_ = new std::string(s, len);
   }
-  
-  inline value::~value() {
+
+  inline void value::clear() {
     switch (type_) {
 #define DEINIT(p) case p##type: delete u_.p; break
       DEINIT(string_);
@@ -250,6 +256,10 @@ namespace picojson {
 #undef DEINIT
     default: break;
     }
+  }
+
+  inline value::~value() {
+    clear();
   }
   
   inline value::value(const value& x) : type_(x.type_) {
@@ -330,6 +340,35 @@ namespace picojson {
   GET(double, u_.number_)
 #endif
 #undef GET
+
+#define SET(ctype, jtype, setter)           \
+  template <> inline void value::set<ctype>(const ctype &_val) {  \
+    clear();                      \
+    type_ = jtype##_type;         \
+    setter                        \
+  }
+  SET(bool, boolean, u_.boolean_ = _val;)
+  SET(std::string, string, u_.string_ = new std::string(_val);)
+  SET(array, array, u_.array_ = new array(_val);)
+  SET(object, object, u_.object_ = new object(_val);)
+  SET(double, number, u_.number_ = _val;)
+#ifdef PICOJSON_USE_INT64
+  SET(int64_t, int64, u_.int64_ = _val;)
+#endif
+#undef SET
+
+#ifdef PICOJSON_USE_RVALUE_REFERENCE
+#define MOVESET(ctype, jtype, setter)       \
+  template <> inline void value::set<ctype>(ctype &&_val) {     \
+    clear();                      \
+    type_ = jtype##_type;         \
+    setter                        \
+  }
+  MOVESET(std::string, string, u_.string_ = new std::string(std::move(_val));)
+  MOVESET(array, array, u_.array_ = new array(std::move(_val));)
+  MOVESET(object, object, u_.object_ = new object(std::move(_val));)
+#undef MOVESET
+#endif
   
   inline bool value::evaluate_as_boolean() const {
     switch (type_) {
