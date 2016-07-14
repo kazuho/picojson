@@ -159,7 +159,7 @@ int main(void)
   	picojson::value &v2 = v1.get<picojson::object>()["1919"];
   	v2.set<picojson::object>(picojson::object());
   	v2.get<picojson::object>()["893"] = picojson::value(810.0);
-    _ok(v.serialize(), string("{\"114\":\"514\",\"1919\":{\"893\":810},\"364\":[334]}"), "modification succeed");
+    _ok(v1.serialize(), string("{\"114\":\"514\",\"1919\":{\"893\":810},\"364\":[334]}"), "modification succeed");
   }
 
 #define TEST(json, msg) do {				\
