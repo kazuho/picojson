@@ -174,7 +174,7 @@ std::string json = v.serialize();
 <pre>
 picojson::value v;
 ...
-v.serialize(std::ostream_iterator(std::cout));
+v.serialize(std::ostream_iterator<char>(std::cout));
 </pre>
 
 ## Experimental support for int64_t
