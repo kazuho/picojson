@@ -145,6 +145,11 @@ namespace picojson {
     explicit value(const std::string& s);
     explicit value(const array& a);
     explicit value(const object& o);
+#if PICOJSON_USE_RVALUE_REFERENCE 
+    explicit value(std::string&& s);
+    explicit value(array&& a);
+    explicit value(object&& o);
+#endif
     explicit value(const char* s);
     value(const char* s, size_t len);
     ~value();
@@ -238,6 +243,20 @@ namespace picojson {
   inline value::value(const object& o) : type_(object_type) {
     u_.object_ = new object(o);
   }
+  
+#if PICOJSON_USE_RVALUE_REFERENCE 
+  inline value::value(std::string&& s) : type_(string_type) {
+    u_.string_ = new std::string(std::move(s));
+  }
+  
+  inline value::value(array&& a) : type_(array_type) {
+    u_.array_ = new array(std::move(a));
+  }
+  
+  inline value::value(object&& o) : type_(object_type) {
+    u_.object_ = new object(std::move(o));
+  }
+#endif
   
   inline value::value(const char* s) : type_(string_type) {
     u_.string_ = new std::string(s);
