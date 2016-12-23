@@ -785,6 +785,9 @@ namespace picojson {
       return ctx.parse_array_stop(idx);
     }
     do {
+      if (in.expect(']')) {
+        return true;
+      }
       if (! ctx.parse_array_item(in, idx)) {
 	return false;
       }
@@ -802,6 +805,9 @@ namespace picojson {
     }
     do {
       std::string key;
+      if (in.expect('}')) {
+        return true;
+      }
       if (! in.expect('"')
 	  || ! _parse_string(key, in)
 	  || ! in.expect(':')) {
