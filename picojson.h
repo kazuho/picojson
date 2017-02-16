@@ -98,7 +98,7 @@ extern "C" {
 #endif
 
 namespace picojson {
-  
+
   enum {
     null_type,
     boolean_type,
@@ -110,13 +110,13 @@ namespace picojson {
     , int64_type
 #endif
   };
-  
+
   enum {
     INDENT_WIDTH = 2
   };
 
   struct null {};
-  
+
   class value {
   public:
     typedef std::vector<value> array;
@@ -145,7 +145,7 @@ namespace picojson {
     explicit value(const std::string& s);
     explicit value(const array& a);
     explicit value(const object& o);
-#if PICOJSON_USE_RVALUE_REFERENCE 
+#if PICOJSON_USE_RVALUE_REFERENCE
     explicit value(std::string&& s);
     explicit value(array&& a);
     explicit value(object&& o);
@@ -155,7 +155,7 @@ namespace picojson {
     ~value();
     value(const value& x);
     value& operator=(const value& x);
-#if PICOJSON_USE_RVALUE_REFERENCE 
+#if PICOJSON_USE_RVALUE_REFERENCE
     value(value&& x)throw();
     value& operator=(value&& x)throw();
 #endif
@@ -168,12 +168,12 @@ namespace picojson {
     template <typename T> void set(T &&);
 #endif
     bool evaluate_as_boolean() const;
-    const value& get(size_t idx) const;
+    const value& get(const size_t idx) const;
     const value& get(const std::string& key) const;
-    value& get(size_t idx);
+    value& get(const size_t idx);
     value& get(const std::string& key);
 
-    bool contains(size_t idx) const;
+    bool contains(const size_t idx) const;
     bool contains(const std::string& key) const;
     std::string to_str() const;
     template <typename Iter> void serialize(Iter os, bool prettify = false) const;
@@ -185,13 +185,13 @@ namespace picojson {
     std::string _serialize(int indent) const;
     void clear();
   };
-  
+
   typedef value::array array;
   typedef value::object object;
-  
-  inline value::value() : type_(null_type) {}
-  
-  inline value::value(int type, bool) : type_(type) {
+
+  inline value::value() : type_(null_type), u_() {}
+
+  inline value::value(int type, bool) : type_(type), u_() {
     switch (type) {
 #define INIT(p, v) case p##type: u_.p = v; break
       INIT(boolean_, false);
@@ -206,18 +206,18 @@ namespace picojson {
     default: break;
     }
   }
-  
-  inline value::value(bool b) : type_(boolean_type) {
+
+  inline value::value(bool b) : type_(boolean_type), u_() {
     u_.boolean_ = b;
   }
 
 #ifdef PICOJSON_USE_INT64
-  inline value::value(int64_t i) : type_(int64_type) {
+  inline value::value(int64_t i) : type_(int64_type), u_() {
     u_.int64_ = i;
   }
 #endif
 
-  inline value::value(double n) : type_(number_type) {
+  inline value::value(double n) : type_(number_type), u_() {
     if (
 #ifdef _MSC_VER
         ! _finite(n)
@@ -231,38 +231,38 @@ namespace picojson {
     }
     u_.number_ = n;
   }
-  
-  inline value::value(const std::string& s) : type_(string_type) {
+
+  inline value::value(const std::string& s) : type_(string_type), u_() {
     u_.string_ = new std::string(s);
   }
-  
-  inline value::value(const array& a) : type_(array_type) {
+
+  inline value::value(const array& a) : type_(array_type), u_() {
     u_.array_ = new array(a);
   }
-  
-  inline value::value(const object& o) : type_(object_type) {
+
+  inline value::value(const object& o) : type_(object_type), u_() {
     u_.object_ = new object(o);
   }
-  
-#if PICOJSON_USE_RVALUE_REFERENCE 
-  inline value::value(std::string&& s) : type_(string_type) {
+
+#if PICOJSON_USE_RVALUE_REFERENCE
+  inline value::value(std::string&& s) : type_(string_type), u_() {
     u_.string_ = new std::string(std::move(s));
   }
-  
-  inline value::value(array&& a) : type_(array_type) {
+
+  inline value::value(array&& a) : type_(array_type), u_() {
     u_.array_ = new array(std::move(a));
   }
-  
-  inline value::value(object&& o) : type_(object_type) {
+
+  inline value::value(object&& o) : type_(object_type), u_() {
     u_.object_ = new object(std::move(o));
   }
 #endif
-  
-  inline value::value(const char* s) : type_(string_type) {
+
+  inline value::value(const char* s) : type_(string_type), u_() {
     u_.string_ = new std::string(s);
   }
-  
-  inline value::value(const char* s, size_t len) : type_(string_type) {
+
+  inline value::value(const char* s, size_t len) : type_(string_type), u_() {
     u_.string_ = new std::string(s, len);
   }
 
@@ -280,8 +280,8 @@ namespace picojson {
   inline value::~value() {
     clear();
   }
-  
-  inline value::value(const value& x) : type_(x.type_) {
+
+  inline value::value(const value& x) : type_(x.type_), u_() {
     switch (type_) {
 #define INIT(p, v) case p##type: u_.p = v; break
       INIT(string_, new std::string(*x.u_.string_));
@@ -293,7 +293,7 @@ namespace picojson {
       break;
     }
   }
-  
+
   inline value& value::operator=(const value& x) {
     if (this != &x) {
       value t(x);
@@ -302,8 +302,8 @@ namespace picojson {
     return *this;
   }
 
-#if PICOJSON_USE_RVALUE_REFERENCE 
-  inline value::value(value&& x)throw() : type_(null_type) {
+#if PICOJSON_USE_RVALUE_REFERENCE
+  inline value::value(value&& x)throw() : type_(null_type), u_() {
     swap(x);
   }
   inline value& value::operator=(value&& x)throw() {
@@ -315,7 +315,7 @@ namespace picojson {
     std::swap(type_, x.type_);
     std::swap(u_, x.u_);
   }
-  
+
 #define IS(ctype, jtype)			     \
   template <> inline bool value::is<ctype>() const { \
     return type_ == jtype##_type;		     \
@@ -336,7 +336,7 @@ namespace picojson {
 #endif
       ;
   }
-  
+
 #define GET(ctype, var)						\
   template <> inline const ctype& value::get<ctype>() const {	\
     PICOJSON_ASSERT("type mismatch! call is<type>() before get<type>()" \
@@ -388,7 +388,7 @@ namespace picojson {
   MOVESET(object, object, u_.object_ = new object(std::move(_val));)
 #undef MOVESET
 #endif
-  
+
   inline bool value::evaluate_as_boolean() const {
     switch (type_) {
     case null_type:
@@ -407,14 +407,14 @@ namespace picojson {
       return true;
     }
   }
-  
-  inline const value& value::get(size_t idx) const {
+
+  inline const value& value::get(const size_t idx) const {
     static value s_null;
     PICOJSON_ASSERT(is<array>());
     return idx < u_.array_->size() ? (*u_.array_)[idx] : s_null;
   }
 
-  inline value& value::get(size_t idx) {
+  inline value& value::get(const size_t idx) {
     static value s_null;
     PICOJSON_ASSERT(is<array>());
     return idx < u_.array_->size() ? (*u_.array_)[idx] : s_null;
@@ -434,7 +434,7 @@ namespace picojson {
     return i != u_.object_->end() ? i->second : s_null;
   }
 
-  inline bool value::contains(size_t idx) const {
+  inline bool value::contains(const size_t idx) const {
     PICOJSON_ASSERT(is<array>());
     return idx < u_.array_->size();
   }
@@ -444,7 +444,7 @@ namespace picojson {
     object::const_iterator i = u_.object_->find(key);
     return i != u_.object_->end();
   }
-  
+
   inline std::string value::to_str() const {
     switch (type_) {
     case null_type:      return "null";
@@ -483,11 +483,11 @@ namespace picojson {
     }
     return std::string();
   }
-  
+
   template <typename Iter> void copy(const std::string& s, Iter oi) {
     std::copy(s.begin(), s.end(), oi);
   }
-  
+
   template <typename Iter>
   struct serialize_str_char {
     Iter oi;
@@ -515,7 +515,7 @@ namespace picojson {
       }
     }
   };
-  
+
   template <typename Iter> void serialize_str(const std::string& s, Iter oi) {
     *oi++ = '"';
     serialize_str_char<Iter> process_char = { oi };
@@ -526,7 +526,7 @@ namespace picojson {
   template <typename Iter> void value::serialize(Iter oi, bool prettify) const {
     return _serialize(oi, prettify ? 0 : -1);
   }
-  
+
   inline std::string value::serialize(bool prettify) const {
     return _serialize(prettify ? 0 : -1);
   }
@@ -606,13 +606,13 @@ namespace picojson {
       *oi++ = '\n';
     }
   }
-  
+
   inline std::string value::_serialize(int indent) const {
     std::string s;
     _serialize(std::back_inserter(s), indent);
     return s;
   }
-  
+
   template <typename Iter> class input {
   protected:
     Iter cur_, end_;
@@ -655,9 +655,9 @@ namespace picojson {
 	}
       }
     }
-    bool expect(int expect) {
+    bool expect(const int expected) {
       skip_ws();
-      if (getc() != expect) {
+      if (getc() != expected) {
 	ungetc();
 	return false;
       }
@@ -675,7 +675,7 @@ namespace picojson {
       return true;
     }
   };
-  
+
   template<typename Iter> inline int _parse_quadhex(input<Iter> &in) {
     int uni_ch = 0, hex;
     for (int i = 0; i < 4; i++) {
@@ -696,7 +696,7 @@ namespace picojson {
     }
     return uni_ch;
   }
-  
+
   template<typename String, typename Iter> inline bool _parse_codepoint(String& out, input<Iter>& in) {
     int uni_ch;
     if ((uni_ch = _parse_quadhex(in)) == -1) {
@@ -720,24 +720,24 @@ namespace picojson {
       uni_ch += 0x10000;
     }
     if (uni_ch < 0x80) {
-      out.push_back(uni_ch);
+      out.push_back( static_cast<char>(uni_ch) );
     } else {
       if (uni_ch < 0x800) {
-	out.push_back(0xc0 | (uni_ch >> 6));
+	out.push_back( static_cast<char>(0xc0 | (uni_ch >> 6)) );
       } else {
 	if (uni_ch < 0x10000) {
-	  out.push_back(0xe0 | (uni_ch >> 12));
+	  out.push_back( static_cast<char>(0xe0 | (uni_ch >> 12)) );
 	} else {
-	  out.push_back(0xf0 | (uni_ch >> 18));
-	  out.push_back(0x80 | ((uni_ch >> 12) & 0x3f));
+	  out.push_back( static_cast<char>(0xf0 | (uni_ch >> 18)) );
+	  out.push_back( static_cast<char>(0x80 | ((uni_ch >> 12) & 0x3f)) );
 	}
-	out.push_back(0x80 | ((uni_ch >> 6) & 0x3f));
+	out.push_back( static_cast<char>(0x80 | ((uni_ch >> 6) & 0x3f)) );
       }
-      out.push_back(0x80 | (uni_ch & 0x3f));
+      out.push_back( static_cast<char>(0x80 | (uni_ch & 0x3f)) );
     }
     return true;
   }
-  
+
   template<typename String, typename Iter> inline bool _parse_string(String& out, input<Iter>& in) {
     while (1) {
       int ch = in.getc();
@@ -770,12 +770,12 @@ namespace picojson {
 	  return false;
 	}
       } else {
-	out.push_back(ch);
+	out.push_back( static_cast<char>(ch) );
       }
     }
     return false;
   }
-  
+
   template <typename Context, typename Iter> inline bool _parse_array(Context& ctx, input<Iter>& in) {
     if (! ctx.parse_array_start()) {
       return false;
@@ -792,7 +792,7 @@ namespace picojson {
     } while (in.expect(','));
     return in.expect(']') && ctx.parse_array_stop(idx);
   }
-  
+
   template <typename Context, typename Iter> inline bool _parse_object(Context& ctx, input<Iter>& in) {
     if (! ctx.parse_object_start()) {
       return false;
@@ -813,14 +813,14 @@ namespace picojson {
     } while (in.expect(','));
     return in.expect('}');
   }
-  
+
   template <typename Iter> inline std::string _parse_number(input<Iter>& in) {
     std::string num_str;
     while (1) {
       int ch = in.getc();
       if (('0' <= ch && ch <= '9') || ch == '+' || ch == '-'
           || ch == 'e' || ch == 'E') {
-        num_str.push_back(ch);
+        num_str.push_back( static_cast<char>(ch) );
       } else if (ch == '.') {
 #if PICOJSON_USE_LOCALE
         num_str += localeconv()->decimal_point;
@@ -834,7 +834,7 @@ namespace picojson {
     }
     return num_str;
   }
-  
+
   template <typename Context, typename Iter> inline bool _parse(Context& ctx, input<Iter>& in) {
     in.skip_ws();
     int ch = in.getc();
@@ -860,7 +860,7 @@ namespace picojson {
         double f;
         char *endp;
 	in.ungetc();
-        std::string num_str = _parse_number(in);
+        std::string num_str( _parse_number(in) );
         if (num_str.empty()) {
           return false;
         }
@@ -889,7 +889,7 @@ namespace picojson {
     in.ungetc();
     return false;
   }
-  
+
   class deny_parse_context {
   public:
     bool set_null() { return false; }
@@ -909,7 +909,7 @@ namespace picojson {
       return false;
     }
   };
-  
+
   class default_parse_context {
   protected:
     value* out_;
@@ -992,14 +992,14 @@ namespace picojson {
     null_parse_context(const null_parse_context&);
     null_parse_context& operator=(const null_parse_context&);
   };
-  
+
   // obsolete, use the version below
   template <typename Iter> inline std::string parse(value& out, Iter& pos, const Iter& last) {
     std::string err;
     pos = parse(out, pos, last, &err);
     return err;
   }
-  
+
   template <typename Context, typename Iter> inline Iter _parse(Context& ctx, const Iter& first, const Iter& last, std::string* err) {
     input<Iter> in(first, last);
     if (! _parse(ctx, in) && err != NULL) {
@@ -1011,18 +1011,18 @@ namespace picojson {
 	if (ch == -1 || ch == '\n') {
 	  break;
 	} else if (ch >= ' ') {
-	  err->push_back(ch);
+	  err->push_back( static_cast<char>(ch) );
 	}
       }
     }
     return in.cur();
   }
-  
+
   template <typename Iter> inline Iter parse(value& out, const Iter& first, const Iter& last, std::string* err) {
     default_parse_context ctx(&out);
     return _parse(ctx, first, last, err);
   }
-  
+
   inline std::string parse(value& out, const std::string& s) {
     std::string err;
     parse(out, s.begin(), s.end(), &err);
@@ -1035,16 +1035,16 @@ namespace picojson {
 	  std::istreambuf_iterator<char>(), &err);
     return err;
   }
-  
+
   template <typename T> struct last_error_t {
     static std::string s;
   };
   template <typename T> std::string last_error_t<T>::s;
-  
+
   inline void set_last_error(const std::string& s) {
     last_error_t<bool>::s = s;
   }
-  
+
   inline const std::string& get_last_error() {
     return last_error_t<bool>::s;
   }
@@ -1067,13 +1067,13 @@ namespace picojson {
 #endif
     return false;
   }
-  
+
   inline bool operator!=(const value& x, const value& y) {
     return ! (x == y);
   }
 }
 
-#if !PICOJSON_USE_RVALUE_REFERENCE 
+#if !PICOJSON_USE_RVALUE_REFERENCE
 namespace std {
   template<> inline void swap(picojson::value& x, picojson::value& y)
     {
@@ -1085,7 +1085,7 @@ namespace std {
 inline std::istream& operator>>(std::istream& is, picojson::value& x)
 {
   picojson::set_last_error(std::string());
-  std::string err = picojson::parse(x, is);
+  const std::string err( picojson::parse(x, is) );
   if (! err.empty()) {
     picojson::set_last_error(err);
     is.setstate(std::ios::failbit);
