@@ -23,4 +23,7 @@ install:
 uninstall:
 	rm -f $(DESTDIR)$(includedir)/picojson.h
 
-.PHONY: test check clean install uninstall
+clang-format: picojson.h examples/github-issues.cc examples/iostream.cc examples/streaming.cc
+	clang-format -i $?
+
+.PHONY: test check clean install uninstall clang-format
