@@ -29,32 +29,30 @@
 #include "../picojson.h"
 
 typedef struct {
-  char* data;   // response data from server
-  size_t size;  // response size of data
+  char *data;  // response data from server
+  size_t size; // response size of data
 } MEMFILE;
 
-MEMFILE*
-memfopen() {
-  MEMFILE* mf = (MEMFILE*) malloc(sizeof(MEMFILE));
+MEMFILE *memfopen() {
+  MEMFILE *mf = (MEMFILE *)malloc(sizeof(MEMFILE));
   mf->data = NULL;
   mf->size = 0;
   return mf;
 }
 
-void
-memfclose(MEMFILE* mf) {
-  if (mf->data) free(mf->data);
+void memfclose(MEMFILE *mf) {
+  if (mf->data)
+    free(mf->data);
   free(mf);
 }
 
-size_t
-memfwrite(char* ptr, size_t size, size_t nmemb, void* stream) {
-  MEMFILE* mf = (MEMFILE*) stream;
+size_t memfwrite(char *ptr, size_t size, size_t nmemb, void *stream) {
+  MEMFILE *mf = (MEMFILE *)stream;
   int block = size * nmemb;
   if (!mf->data)
-    mf->data = (char*) malloc(block);
+    mf->data = (char *)malloc(block);
   else
-    mf->data = (char*) realloc(mf->data, mf->size + block);
+    mf->data = (char *)realloc(mf->data, mf->size + block);
   if (mf->data) {
     memcpy(mf->data + mf->size, ptr, block);
     mf->size += block;
@@ -62,9 +60,8 @@ memfwrite(char* ptr, size_t size, size_t nmemb, void* stream) {
   return block;
 }
 
-char*
-memfstrdup(MEMFILE* mf) {
-  char* buf = (char*)malloc(mf->size + 1);
+char *memfstrdup(MEMFILE *mf) {
+  char *buf = (char *)malloc(mf->size + 1);
   memcpy(buf, mf->data, mf->size);
   buf[mf->size] = 0;
   return buf;
@@ -73,12 +70,11 @@ memfstrdup(MEMFILE* mf) {
 using namespace std;
 using namespace picojson;
 
-int
-main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
   char error[256];
 
-  MEMFILE* mf = memfopen();
-  CURL* curl = curl_easy_init();
+  MEMFILE *mf = memfopen();
+  CURL *curl = curl_easy_init();
   curl_easy_setopt(curl, CURLOPT_URL, "https://api.github.com/repos/kazuho/picojson/issues");
   curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0);
   curl_easy_setopt(curl, CURLOPT_USERAGENT, "curl");
