@@ -1025,7 +1025,12 @@ namespace picojson {
 
   inline std::string parse(value& out, const std::string& s) {
     std::string err;
-    parse(out, s.begin(), s.end(), &err);
+    std::string::const_iterator begin = s.begin();
+    std::string::const_iterator last_char = begin + s.find_last_not_of(" \t\n\r");
+    std::string::const_iterator end = parse(out, begin, s.end(), &err);
+    if (end != last_char + 1 && err.empty()) {
+      err = "Input string contained non-whitespace trailing characters: " + s.substr(end - begin, last_char + 1 - end);
+    }
     return err;
   }
 
