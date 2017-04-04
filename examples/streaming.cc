@@ -39,6 +39,9 @@ public:
   bool parse_array_start() {
     return true; // only allow array as root
   }
+  bool parse_array_stop(size_t) {
+    return true;
+  }
   template <typename Iter> bool parse_array_item(picojson::input<Iter> &in, size_t) {
     picojson::value item;
     // parse the array item
