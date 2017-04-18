@@ -265,7 +265,7 @@ int main(void)
     _ok(v.serialize(true) == "{\n  \"a\": 1,\n  \"b\": [\n    2,\n    {\n      \"b1\": \"abc\"\n    }\n  ],\n  \"c\": {},\n  \"d\": []\n}\n", "prettifying output");
   }
 
-#if !defined(PICOSJON_NO_EXCEPTIONS)
+#if !defined(PICOJSON_NO_EXCEPTIONS)
   try {
     picojson::value v(std::numeric_limits<double>::quiet_NaN());
     _ok(false, "should not accept NaN");
