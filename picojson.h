@@ -37,7 +37,11 @@
 #include <iterator>
 #include <limits>
 #include <map>
+#if (!defined(PICOSJON_NO_EXCEPTIONS))
 #include <stdexcept>
+#else
+echo "picosjon no exceptions option\n"
+#endif // PICOSJON_NO_EXCEPTIONS)
 #include <string>
 #include <vector>
 #include <utility>
@@ -46,7 +50,7 @@
 #if __cplusplus >= 201103L
 #include <cmath>
 #else
-extern "C" {
+    extern "C" {
 #ifdef _MSC_VER
 #include <float.h>
 #elif defined(__INTEL_COMPILER)
@@ -83,12 +87,18 @@ extern "C" {
 #endif
 
 #ifndef PICOJSON_ASSERT
+#if (!defined(PICOSJON_NO_EXCEPTIONS))
 #define PICOJSON_ASSERT(e)                                                                                                         \
   do {                                                                                                                             \
     if (!(e))                                                                                                                      \
       throw std::runtime_error(#e);                                                                                                \
   } while (0)
-#endif
+#else
+#define PICOJSON_ASSERT(e)                                                                                                         \
+  if (!e)                                                                                                                          \
+    std::cerr << "picosjon runtime error\n";
+#endif // PICOSJON_NO_EXCEPTIONS
+#endif // PICOJSON_ASSERT
 
 #ifdef _MSC_VER
 #define SNPRINTF _snprintf_s
@@ -159,11 +169,20 @@ public:
   ~value();
   value(const value &x);
   value &operator=(const value &x);
+
 #if PICOJSON_USE_RVALUE_REFERENCE
+#if (!defined(PICOSJON_NO_EXCEPTIONS))
   value(value &&x) throw();
   value &operator=(value &&x) throw();
+#else
+  value(value &&x) value &operator=(value &&x)
+#endif // PICOSJON_NO_EXCEPTIONS)
 #endif
+#if (!defined(PICOSJON_NO_EXCEPTIONS))
   void swap(value &x) throw();
+#else
+  void swap(value &x);
+#endif // PICOSJON_NO_EXCEPTIONS)
   template <typename T> bool is() const;
   template <typename T> const T &get() const;
   template <typename T> T &get();
@@ -237,7 +256,9 @@ inline value::value(double n) : type_(number_type), u_() {
       isnan(n) || isinf(n)
 #endif
           ) {
+#if !defined(PICOSJON_NO_EXCEPTIONS)
     throw std::overflow_error("");
+#endif // PICOSJON_NO_EXCEPTIONS)
   }
   u_.number_ = n;
 }
@@ -318,7 +339,7 @@ inline value &value::operator=(const value &x) {
   }
   return *this;
 }
-
+#if (!defined(PICOSJON_NO_EXCEPTIONS))
 #if PICOJSON_USE_RVALUE_REFERENCE
 inline value::value(value &&x) throw() : type_(null_type), u_() {
   swap(x);
@@ -332,6 +353,22 @@ inline void value::swap(value &x) throw() {
   std::swap(type_, x.type_);
   std::swap(u_, x.u_);
 }
+#else // PICOSJON_NO_EXCEPTIONS
+#if PICOJSON_USE_RVALUE_REFERENCE
+inline value::value(value &&x) : type_(null_type), u_() {
+  swap(x);
+}
+inline value &value::operator=(value &&x) {
+  swap(x);
+  return *this;
+}
+#endif
+inline void value::swap(value &x) {
+  std::swap(type_, x.type_);
+  std::swap(u_, x.u_);
+}
+
+#endif // PICOSJON_NO_EXCEPTIONS
 
 #define IS(ctype, jtype)                                                                                                           \
   template <> inline bool value::is<ctype>() const {                                                                               \

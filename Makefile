@@ -6,6 +6,7 @@ check: test
 test: test-core test-core-int64
 	./test-core
 	./test-core-int64
+	./test-no-except
 
 test-core: picojson.h test.cc picotest/picotest.c picotest/picotest.h
 	$(CXX) -Wall test.cc picotest/picotest.c -o $@
@@ -13,8 +14,11 @@ test-core: picojson.h test.cc picotest/picotest.c picotest/picotest.h
 test-core-int64: picojson.h test.cc picotest/picotest.c picotest/picotest.h
 	$(CXX) -Wall -DPICOJSON_USE_INT64 test.cc picotest/picotest.c -o $@
 
+test-no-except: picojson.h test.cc picotest/picotest.c picotest/picotest.h
+	$(CXX) -Wall -DPICOJSON_NO_EXCEPTIONS test.cc picotest/picotest.c -o $@
+
 clean:
-	rm -f test-core test-core-int64
+	rm -f test-core test-core-int64 test-no-except
 
 install:
 	install -d $(DESTDIR)$(includedir)
