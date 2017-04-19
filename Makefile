@@ -3,7 +3,7 @@ includedir=$(prefix)/include
 
 check: test
 
-test: test-core test-core-int64
+test: test-core test-core-int64 test-no-except
 	./test-core
 	./test-core-int64
 	./test-no-except
