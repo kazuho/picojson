@@ -265,6 +265,7 @@ int main(void)
     _ok(v.serialize(true) == "{\n  \"a\": 1,\n  \"b\": [\n    2,\n    {\n      \"b1\": \"abc\"\n    }\n  ],\n  \"c\": {},\n  \"d\": []\n}\n", "prettifying output");
   }
 
+#if !defined(PICOJSON_NO_EXCEPTIONS)
   try {
     picojson::value v(std::numeric_limits<double>::quiet_NaN());
     _ok(false, "should not accept NaN");
@@ -287,6 +288,7 @@ int main(void)
   } catch (std::runtime_error e) {
     _ok(true, "get<wrong_type>() should raise an error");
   }
+#endif
 
 #ifdef PICOJSON_USE_INT64
   {
