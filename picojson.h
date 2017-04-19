@@ -39,8 +39,6 @@
 #include <map>
 #if (!defined(PICOJSON_NO_EXCEPTIONS))
 #include <stdexcept>
-#else
-#pragma message("picojson no exceptions option")
 #endif // PICOJSON_NO_EXCEPTIONS)
 #include <string>
 #include <vector>
