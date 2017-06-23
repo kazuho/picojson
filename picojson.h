@@ -353,7 +353,7 @@ inline void value::swap(value &x) throw() {
 }
 
 #define IS(ctype, jtype)                                                                                                           \
-  template <> inline bool value::is<ctype>() const {                                                                               \																									   \
+  template <> inline bool value::is<ctype>() const {                                                                               \
     return type_ == jtype##_type;                                                                                                  \
   }
 IS(null, null)
