@@ -352,11 +352,8 @@ inline void value::swap(value &x) throw() {
   std::swap(u_, x.u_);
 }
 
-int debug_type = 0;
-
 #define IS(ctype, jtype)                                                                                                           \
-  template <> inline bool value::is<ctype>() const {                                                                               \
-    debug_type = type_;																											   \
+  template <> inline bool value::is<ctype>() const {                                                                               \																									   \
     return type_ == jtype##_type;                                                                                                  \
   }
 IS(null, null)
