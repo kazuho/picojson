@@ -1114,6 +1114,9 @@ inline bool operator==(const value &x, const value &y) {
   if (x.is<type>())                                                                                                                \
   return y.is<type>() && x.get<type>() == y.get<type>()
   PICOJSON_CMP(bool);
+#ifdef PICOJSON_USE_INT64
+  PICOJSON_CMP(int64_t);
+#endif
   PICOJSON_CMP(double);
   PICOJSON_CMP(std::string);
   PICOJSON_CMP(array);
