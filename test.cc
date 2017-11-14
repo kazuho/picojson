@@ -50,7 +50,7 @@ int main(void)
   // constructors
 #define TEST(expr, expected) \
     is(picojson::value expr .serialize(), string(expected), "picojson::value" #expr)
-  
+
   TEST( (true),  "true");
   TEST( (false), "false");
   TEST( (42.0),   "42");
@@ -73,9 +73,9 @@ int main(void)
       a *= 2;
     }
   }
-  
+
 #undef TEST
-  
+
 #define TEST(in, type, cmp, serialize_test) {				\
     picojson::value v;							\
     const char* s = in;							\
@@ -116,7 +116,7 @@ int main(void)
   TEST(array, "[]");
   TEST(object, "{}");
 #undef TEST
-  
+
   {
     picojson::value v;
     const char *s = "[1,true,\"hello\"]";
@@ -135,7 +135,7 @@ int main(void)
     is(v.get(2).get<string>(), string("hello"), "check array[2] value");
     _ok(!v.contains(3), "check not contains array[3]");
   }
-  
+
   {
     picojson::value v;
     const char *s = "{ \"a\": true }";
@@ -173,7 +173,7 @@ int main(void)
   TEST("\n\bbell", "2 near: bell");
   TEST("\"abc\nd\"", "1 near: ");
 #undef TEST
-  
+
   {
     picojson::value v1, v2;
     const char *s;
@@ -226,7 +226,7 @@ int main(void)
 
   _ok(picojson::value(3.0).serialize() == "3",
      "integral number should be serialized as a integer");
-  
+
   {
     const char* s = "{ \"a\": [1,2], \"d\": 2 }";
     picojson::null_parse_context ctx;
@@ -234,7 +234,7 @@ int main(void)
     picojson::_parse(ctx, s, s + strlen(s), &err);
     _ok(err.empty(), "null_parse_context");
   }
-  
+
   {
     picojson::value v1, v2;
     v1 = picojson::value(true);
@@ -254,7 +254,7 @@ int main(void)
     _ok(v1.is<picojson::array>(), "swap (array)");
     _ok(v2.is<picojson::object>(), "swap (object)");
   }
-  
+
   {
     picojson::value v;
     const char *s = "{ \"a\": 1, \"b\": [ 2, { \"b1\": \"abc\" } ], \"c\": {}, \"d\": [] }";
@@ -342,6 +342,70 @@ int main(void)
     _ok(v.is<double>(), "is number");
     _ok(v.get<double>() == 123.0, "is 123");
     is(*reststr, 'a', "should point at the next char");
+  }
+
+  {
+    picojson::easyjson v("foo");
+    _ok(v.get_value().get<std::string>() == "foo", "equals value");
+    v = "bar";
+    _ok(v.get_value().get<std::string>() == "bar", "equals value");
+  }
+
+  {
+    picojson::easyjson v(std::string("foo"));
+    _ok(v.get_value().get<std::string>() == "foo", "equals value");
+    v = std::string("bar");
+    _ok(v.get_value().get<std::string>() == "bar", "equals value");
+  }
+
+  {
+    picojson::easyjson v(1);
+    _ok(v.get_value().get<double>() == 1, "equals value");
+    v = 2;
+    _ok(v.get_value().get<double>() == 2, "equals value");
+  }
+
+  {
+    picojson::easyjson v(1.0f);
+    _ok(v.get_value().get<double>() == 1.0f, "equals value");
+    v = 2.0f;
+    _ok(v.get_value().get<double>() == 2.0f, "equals value");
+  }
+
+  {
+    picojson::easyjson v(1.0);
+    _ok(v.get_value().get<double>() == 1.0, "equals value");
+    v = 2.0;
+    _ok(v.get_value().get<double>() == 2.0, "equals value");
+  }
+
+  {
+    picojson::easyjson v;
+    v["foo"] = 12;
+    _ok(v["foo"].get_value().get<double>() == 12, "equals value");
+  }
+
+  {
+    picojson::easyjson v;
+    v[12] = "foo";
+    _ok(v[12].get_value().get<std::string>() == "foo", "equals value");
+  }
+
+  {
+    picojson::easyjson v, v_equal;
+    v["foo"] = "bar";
+    v_equal = v;
+    picojson::easyjson v_copy(v);
+
+    _ok(v["foo"].get_value().get<std::string>() == v_copy["foo"].get_value().get<std::string>(), "copy equals original");
+    _ok(v["foo"].get_value().get<std::string>() == v_equal["foo"].get_value().get<std::string>(), "equality assigned to original");
+
+    v_copy["foo"] = "baz";
+    v_equal["foo"] = "picojson rocks !";
+
+    _ok(v["foo"].get_value().get<std::string>() == "bar", "original not modified");
+    _ok(v_copy["foo"].get_value().get<std::string>() == "baz", "changed value in copy is OK");
+    _ok(v_equal["foo"].get_value().get<std::string>() == "picojson rocks !", "changed value after equality is OK");
   }
 
   return done_testing();

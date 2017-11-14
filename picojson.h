@@ -183,6 +183,8 @@ public:
   template <typename Iter> void serialize(Iter os, bool prettify = false) const;
   std::string serialize(bool prettify = false) const;
 
+  int get_type() const;
+
 private:
   template <typename T> value(const T *); // intentionally defined to block implicit conversion of pointer to bool
   template <typename Iter> static void _indent(Iter os, int indent);
@@ -632,6 +634,10 @@ inline std::string value::_serialize(int indent) const {
   std::string s;
   _serialize(std::back_inserter(s), indent);
   return s;
+}
+
+inline int value::get_type() const {
+  return type_;
 }
 
 template <typename Iter> class input {
@@ -1129,6 +1135,147 @@ inline bool operator==(const value &x, const value &y) {
 inline bool operator!=(const value &x, const value &y) {
   return !(x == y);
 }
+
+class easyjson
+{
+public:
+
+  //Constructors
+
+  easyjson() :
+    internal_value(*new picojson::value()),
+    needsDelete(true) {
+  }
+
+  easyjson(picojson::value & v) :
+    internal_value(v),
+    needsDelete(false) {
+  }
+
+  easyjson(bool b):
+    internal_value(*new picojson::value(b)),
+    needsDelete(true) {
+  }
+
+  easyjson(const char * c):
+    internal_value(*new picojson::value(std::string(c))),
+    needsDelete(true) {
+  }
+
+  easyjson(const std::string & s):
+    internal_value(*new picojson::value(s)),
+    needsDelete(true) {
+  }
+
+  easyjson(int value):
+    internal_value(*new picojson::value(double(value))),
+    needsDelete(true) {
+  }
+
+  easyjson(double d):
+    internal_value(*new picojson::value(d)),
+    needsDelete(true) {
+  }
+
+  // Copy constructor
+
+  easyjson(const easyjson & other) :
+    internal_value(*new picojson::value(other.get_value())),
+    needsDelete(true) {
+      get_value() = other.get_value();
+  }
+
+  // picojson::value accessor
+
+  const value & get_value() const
+  {
+    return internal_value;
+  }
+
+  value & get_value()
+  {
+    return internal_value;
+  }
+
+
+  // Equality operators
+
+  easyjson & operator=(bool b) {
+    PICOJSON_ASSERT(get_value().get_type() == null_type || get_value().get_type() == boolean_type);
+    get_value() = picojson::value(b);
+    return *this;
+  }
+
+  easyjson & operator=(const char * c) {
+    PICOJSON_ASSERT(get_value().get_type() == null_type || get_value().get_type() == string_type);
+    get_value() = picojson::value(std::string(c));
+    return *this;
+  }
+
+  easyjson & operator=(const std::string & s) {
+    PICOJSON_ASSERT(get_value().get_type() == null_type || get_value().get_type() == string_type);
+    get_value() = picojson::value(s);
+    return *this;
+  }
+
+  easyjson & operator=(int i) {
+    PICOJSON_ASSERT(get_value().get_type() == null_type || get_value().get_type() == number_type);
+    get_value() = picojson::value(double(i));
+    return *this;
+  }
+
+  easyjson & operator=(double d) {
+    PICOJSON_ASSERT(get_value().get_type() == null_type || get_value().get_type() == number_type);
+    get_value() = picojson::value(d);
+    return *this;
+  }
+
+  easyjson & operator=(const easyjson & other) {
+    get_value() = other.get_value();
+    return *this;
+  }
+
+  // Assignment operators
+
+  easyjson operator[](const std::string & s) {
+    PICOJSON_ASSERT(get_value().get_type() == null_type || get_value().get_type() == object_type);
+
+    if (get_value().get_type() == null_type)
+      get_value().set<picojson::value::object>(picojson::value::object());
+
+    return get_value().get<picojson::value::object>()[std::string(s)];
+  }
+
+  easyjson operator[](const char * c) {
+    return operator[](std::string(c));
+  }
+
+  easyjson operator[](picojson::value::array::size_type index) {
+    PICOJSON_ASSERT(get_value().get_type() == null_type || get_value().get_type() == array_type);
+
+    if (get_value().get_type() == null_type) {
+      get_value().set<picojson::value::array>(picojson::value::array(index + 1));
+    }
+
+    if (get_value().get<picojson::value::array>().size() <= index) {
+      get_value().get<picojson::value::array>().resize(index + 1);
+    }
+
+    return get_value().get<picojson::value::array>().at(index);
+  }
+
+  ~easyjson()
+  {
+    if (needsDelete)
+    {
+      delete &internal_value;
+    }
+  }
+private:
+  picojson::value & internal_value;
+  bool needsDelete;
+};
+
 }
 
 #if !PICOJSON_USE_RVALUE_REFERENCE
