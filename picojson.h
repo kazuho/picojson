@@ -512,6 +512,7 @@ template <typename Iter> void copy(const std::string &s, Iter oi) {
 }
 
 template <typename Iter> struct serialize_str_char {
+  serialize_str_char( Iter _oi ) : oi( _oi ) {};
   Iter oi;
   void operator()(char c) {
     switch (c) {
