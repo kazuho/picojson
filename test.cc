@@ -268,14 +268,14 @@ int main(void)
   try {
     picojson::value v(std::numeric_limits<double>::quiet_NaN());
     _ok(false, "should not accept NaN");
-  } catch (std::overflow_error e) {
+  } catch (std::overflow_error& e) {
     _ok(true, "should not accept NaN");
   }
 
   try {
     picojson::value v(std::numeric_limits<double>::infinity());
     _ok(false, "should not accept infinity");
-  } catch (std::overflow_error e) {
+  } catch (std::overflow_error& e) {
     _ok(true, "should not accept infinity");
   }
 
@@ -284,7 +284,7 @@ int main(void)
     _ok(! v.is<bool>(), "is<wrong_type>() should return false");
     v.get<bool>();
     _ok(false, "get<wrong_type>() should raise an error");
-  } catch (std::runtime_error e) {
+  } catch (std::runtime_error& e) {
     _ok(true, "get<wrong_type>() should raise an error");
   }
 
