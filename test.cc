@@ -344,5 +344,32 @@ int main(void)
     is(*reststr, 'a', "should point at the next char");
   }
 
+  {
+    std::string s = "[{\"a\":123}]", err;
+    picojson::value v;
+    picojson::default_parse_context ctx(&v, 2);
+    std::string::const_iterator end = picojson::_parse(ctx, s.begin(), s.end(), &err);
+    _ok(err.empty(), "should succeed");
+    _ok(end == s.end(), "should have consumed all input");
+    _ok(v.get(0).get("a").get<double>() == 123, "should return correct value");
+  }
+
+  {
+    std::string s = "[{\"a\":123}]", err;
+    picojson::value v;
+    picojson::default_parse_context ctx(&v, 1);
+    std::string::const_iterator end = picojson::_parse(ctx, s.begin(), s.end(), &err);
+    _ok(!err.empty(), "should fail");
+    _ok(v.is<picojson::array>(), "should get an array");
+    _ok(v.get(0).is<picojson::null>(), "that contains null");
+  }
+
+  {
+    std::string s = "[{\"a\":123}]", err;
+    picojson::null_parse_context ctx(1);
+    std::string::const_iterator end = picojson::_parse(ctx, s.begin(), s.end(), &err);
+    _ok(!err.empty(), "should fail");
+  }
+
   return done_testing();
 }
