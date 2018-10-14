@@ -106,7 +106,7 @@ namespace picojson {
 
     bool is&lt;object&gt;() const;               // check if the object is an "object"
     const object& get&lt;object&gt;() const;     // const accessor (usable only if the object is an object)
-    object& get&lt;object&gt;();                 // non-const accessor (usable only if the object is an array)
+    object& get&lt;object&gt;();                 // non-const accessor (usable only if the object is an object)
 
     bool evaluate_as_boolean() const;      // evaluates the object as a boolean
 
