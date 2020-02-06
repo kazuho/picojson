@@ -1,4 +1,4 @@
-prefix=/usr/local
+prefix ?= /usr/local
 includedir=$(prefix)/include
 
 check: test
