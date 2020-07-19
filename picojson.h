@@ -110,6 +110,7 @@ extern "C" {
 #pragma warning(disable : 4244) // conversion from int to char
 #pragma warning(disable : 4127) // conditional expression is constant
 #pragma warning(disable : 4702) // unreachable code
+#pragma warning(disable : 4706) // assignment within conditional expression
 #else
 #define SNPRINTF snprintf
 #endif
