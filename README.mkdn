@@ -63,7 +63,7 @@ std::cin >> v;
 std::string err = picojson::get_last_error();
 ```
 
-## Accessing the values
+## Accessing the values of JSON
 
 Values of a JSON object is represented as instances of picojson::value class.
 
