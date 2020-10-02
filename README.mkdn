@@ -15,12 +15,12 @@ PicoJSON is a tiny JSON parser / serializer for C++ with following properties:
 
 - header-file only
 - no external dependencies (only uses standard C++ libraries)
-- STL-frendly (arrays are represented by using std::vector, objects are std::map)
+- STL-friendly (arrays are represented by using std::vector, objects are std::map)
 - provides both pull interface and streaming (event-based) interface
 
 ## Reading JSON using the pull interface
 
-There are several ways to use the pull (DOM-like) interface of picojson.
+There are several ways to used the pull (DOM-like) interface of picojson.
 
 The easiest way is to use the two-argument `parse` function.
 
@@ -33,7 +33,7 @@ if (! err.empty()) {
 }
 ```
 
-Four-argument `parse` function accepts a pair of iterators, and returns the end position of the input.
+Four-argument `parse` function accepts a pairs of iterators, and returns the end position of the input.
 
 ```
 const char* json = "{\"a\":1}";
@@ -65,7 +65,7 @@ std::string err = picojson::get_last_error();
 
 ## Accessing the values
 
-Values of a JSON object is represented as instances of picojson::value class.
+Values of a JSON object is represented as instance of picojson::value class.
 
 <pre>
 namespace picojson {
@@ -179,7 +179,7 @@ v.serialize(std::ostream_iterator&lt;char&gt;(std::cout));
 
 ## Experimental support for int64_t
 
-Experimental suport for int64_t becomes available if the code is compiled with preprocessor macro `PICOJSON_USE_INT64`.
+Experimental support for int64_t becomes available if the code is compiled with preprocessor macro `PICOJSON_USE_INT64`.
 
 Turning on the feature will cause following changes to picojson:
 - new constructor `picojson::value(int64_t)` is defined
@@ -188,7 +188,7 @@ Turning on the feature will cause following changes to picojson:
  - the values are also avaliable as `double`s as well (i.e. all values which are `.is<int64_t>() == true` are also `.is<double>() == true`)
 - int64 values are converted to double once `get<double>()` is called
 
-Enabling the feature should not cause compatibility problem with code that do not use the feature.
+Enabling the feature should not causes compatibility problem with code that do not use the feature.
 
 ## Further reading
 
