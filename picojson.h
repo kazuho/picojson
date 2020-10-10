@@ -57,6 +57,10 @@ extern "C" {
 }
 #endif
 
+#if (__cplusplus < 201103L)
+  #error "PicoJSON requires C++11 or higher standard"
+#endif
+
 #ifndef PICOJSON_USE_RVALUE_REFERENCE
 #if (defined(__cpp_rvalue_references) && __cpp_rvalue_references >= 200610) || (defined(_MSC_VER) && _MSC_VER >= 1600)
 #define PICOJSON_USE_RVALUE_REFERENCE 1
