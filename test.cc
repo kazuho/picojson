@@ -38,8 +38,7 @@ using namespace std;
 
 #include <algorithm>
 #include <sstream>
-#include <float.h>
-#include <limits.h>
+#include <limits>
 
 int main(void)
 {
@@ -91,7 +90,7 @@ int main(void)
   TEST("false", bool, false, true);
   TEST("true", bool, true, true);
   TEST("90.5", double, 90.5, false);
-  TEST("1.7976931348623157e+308", double, DBL_MAX, false);
+  TEST("1.7976931348623157e+308", double, std::numeric_limits<double>::max(), false);
   TEST(R"("hello")", string, string("hello"), true);
   TEST(R"("\"\\\/\b\f\n\r\t")", string, string("\"\\/\b\f\n\r\t"),
        true);
