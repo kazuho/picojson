@@ -50,7 +50,7 @@ int main(void)
   // constructors
 #define TEST(expr, expected) \
     is(picojson::value expr .serialize(), string(expected), "picojson::value" #expr)
-  
+
   TEST( (true),  "true");
   TEST( (false), "false");
   TEST( (42.0),   "42");
@@ -73,9 +73,9 @@ int main(void)
       a *= 2;
     }
   }
-  
+
 #undef TEST
-  
+
 #define TEST(in, type, cmp, serialize_test) {				\
     picojson::value v;							\
     const char* s = in;							\
@@ -116,7 +116,7 @@ int main(void)
   TEST(array, "[]");
   TEST(object, "{}");
 #undef TEST
-  
+
   {
     picojson::value v;
     const char *s = "[1,true,\"hello\"]";
@@ -135,7 +135,7 @@ int main(void)
     is(v.get(2).get<string>(), string("hello"), "check array[2] value");
     _ok(!v.contains(3), "check not contains array[3]");
   }
-  
+
   {
     picojson::value v;
     const char *s = "{ \"a\": true }";
@@ -173,7 +173,7 @@ int main(void)
   TEST("\n\bbell", "2 near: bell");
   TEST("\"abc\nd\"", "1 near: ");
 #undef TEST
-  
+
   {
     picojson::value v1, v2;
     const char *s;
@@ -226,7 +226,7 @@ int main(void)
 
   _ok(picojson::value(3.0).serialize() == "3",
      "integral number should be serialized as a integer");
-  
+
   {
     const char* s = "{ \"a\": [1,2], \"d\": 2 }";
     picojson::null_parse_context ctx;
@@ -234,7 +234,7 @@ int main(void)
     picojson::_parse(ctx, s, s + strlen(s), &err);
     _ok(err.empty(), "null_parse_context");
   }
-  
+
   {
     picojson::value v1, v2;
     v1 = picojson::value(true);
@@ -254,7 +254,7 @@ int main(void)
     _ok(v1.is<picojson::array>(), "swap (array)");
     _ok(v2.is<picojson::object>(), "swap (object)");
   }
-  
+
   {
     picojson::value v;
     const char *s = "{ \"a\": 1, \"b\": [ 2, { \"b1\": \"abc\" } ], \"c\": {}, \"d\": [] }";
