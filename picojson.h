@@ -61,22 +61,6 @@ extern "C" {
   #error "PicoJSON requires C++11 or higher standard"
 #endif
 
-#ifndef PICOJSON_USE_RVALUE_REFERENCE
-#if (defined(__cpp_rvalue_references) && __cpp_rvalue_references >= 200610) || (defined(_MSC_VER) && _MSC_VER >= 1600)
-#define PICOJSON_USE_RVALUE_REFERENCE 1
-#else
-#define PICOJSON_USE_RVALUE_REFERENCE 0
-#endif
-#endif // PICOJSON_USE_RVALUE_REFERENCE
-
-#ifndef PICOJSON_NOEXCEPT
-#if PICOJSON_USE_RVALUE_REFERENCE
-#define PICOJSON_NOEXCEPT noexcept
-#else
-#define PICOJSON_NOEXCEPT throw()
-#endif
-#endif
-
 // experimental support for int64_t (see README.mkdn for detail)
 #ifdef PICOJSON_USE_INT64
 #define __STDC_FORMAT_MACROS
@@ -168,28 +152,22 @@ public:
   explicit value(const std::string &s);
   explicit value(const array &a);
   explicit value(const object &o);
-#if PICOJSON_USE_RVALUE_REFERENCE
   explicit value(std::string &&s);
   explicit value(array &&a);
   explicit value(object &&o);
-#endif
   explicit value(const char *s);
   value(const char *s, size_t len);
   ~value();
   value(const value &x);
   value &operator=(const value &x);
-#if PICOJSON_USE_RVALUE_REFERENCE
-  value(value &&x) PICOJSON_NOEXCEPT;
-  value &operator=(value &&x) PICOJSON_NOEXCEPT;
-#endif
-  void swap(value &x) PICOJSON_NOEXCEPT;
+  value(value &&x) noexcept;
+  value &operator=(value &&x) noexcept;
+  void swap(value &x) noexcept;
   template <typename T> bool is() const;
   template <typename T> const T &get() const;
   template <typename T> T &get();
   template <typename T> void set(const T &);
-#if PICOJSON_USE_RVALUE_REFERENCE
   template <typename T> void set(T &&);
-#endif
   bool evaluate_as_boolean() const;
   const value &get(const size_t idx) const;
   const value &get(const std::string &key) const;
@@ -273,7 +251,6 @@ inline value::value(const object &o) : type_(object_type), u_() {
   u_.object_ = new object(o);
 }
 
-#if PICOJSON_USE_RVALUE_REFERENCE
 inline value::value(std::string &&s) : type_(string_type), u_() {
   u_.string_ = new std::string(std::move(s));
 }
@@ -285,7 +262,6 @@ inline value::value(array &&a) : type_(array_type), u_() {
 inline value::value(object &&o) : type_(object_type), u_() {
   u_.object_ = new object(std::move(o));
 }
-#endif
 
 inline value::value(const char *s) : type_(string_type), u_() {
   u_.string_ = new std::string(s);
@@ -338,16 +314,14 @@ inline value &value::operator=(const value &x) {
   return *this;
 }
 
-#if PICOJSON_USE_RVALUE_REFERENCE
-inline value::value(value &&x) PICOJSON_NOEXCEPT : type_(null_type), u_() {
+inline value::value(value &&x) noexcept : type_(null_type), u_() {
   swap(x);
 }
-inline value &value::operator=(value &&x) PICOJSON_NOEXCEPT {
+inline value &value::operator=(value &&x) noexcept {
   swap(x);
   return *this;
 }
-#endif
-inline void value::swap(value &x) PICOJSON_NOEXCEPT {
+inline void value::swap(value &x) noexcept {
   std::swap(type_, x.type_);
   std::swap(u_, x.u_);
 }
@@ -414,7 +388,6 @@ SET(int64_t, int64, u_.int64_ = _val;)
 #endif
 #undef SET
 
-#if PICOJSON_USE_RVALUE_REFERENCE
 #define MOVESET(ctype, jtype, setter)                                                                                              \
   template <> inline void value::set<ctype>(ctype && _val) {                                                                       \
     clear();                                                                                                                       \
@@ -425,7 +398,6 @@ MOVESET(std::string, string, u_.string_ = new std::string(std::move(_val));)
 MOVESET(array, array, u_.array_ = new array(std::move(_val));)
 MOVESET(object, object, u_.object_ = new object(std::move(_val));)
 #undef MOVESET
-#endif
 
 inline bool value::evaluate_as_boolean() const {
   switch (type_) {
@@ -1151,14 +1123,6 @@ inline bool operator!=(const value &x, const value &y) {
   return !(x == y);
 }
 }
-
-#if !PICOJSON_USE_RVALUE_REFERENCE
-namespace std {
-template <> inline void swap(picojson::value &x, picojson::value &y) {
-  x.swap(y);
-}
-}
-#endif
 
 inline std::istream &operator>>(std::istream &is, picojson::value &x) {
   picojson::set_last_error(std::string());
