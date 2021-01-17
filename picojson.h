@@ -128,6 +128,10 @@ enum {
   ,
   int64_type
 #endif
+#ifdef PICOJSON_USE_UINT64
+  ,
+  uint64_type
+#endif
 };
 
 enum { INDENT_WIDTH = 2, DEFAULT_MAX_DEPTHS = 100 };
@@ -144,6 +148,9 @@ public:
 #ifdef PICOJSON_USE_INT64
     int64_t int64_;
 #endif
+#ifdef PICOJSON_USE_UINT64
+	uint64_t uint64_;
+#endif
     std::string *string_;
     array *array_;
     object *object_;
@@ -159,6 +166,9 @@ public:
   explicit value(bool b);
 #ifdef PICOJSON_USE_INT64
   explicit value(int64_t i);
+#endif
+#ifdef PICOJSON_USE_UINT64
+  explicit value(uint64_t i);
 #endif
   explicit value(double n);
   explicit value(const std::string &s);
@@ -223,6 +233,9 @@ inline value::value(int type, bool) : type_(type), u_() {
 #ifdef PICOJSON_USE_INT64
     INIT(int64_, 0);
 #endif
+#ifdef PICOJSON_USE_UINT64
+	INIT(uint64_, 0);
+#endif
     INIT(string_, new std::string());
     INIT(array_, new array());
     INIT(object_, new object());
@@ -239,6 +252,12 @@ inline value::value(bool b) : type_(boolean_type), u_() {
 #ifdef PICOJSON_USE_INT64
 inline value::value(int64_t i) : type_(int64_type), u_() {
   u_.int64_ = i;
+}
+#endif
+
+#ifdef PICOJSON_USE_UINT64
+inline value::value(uint64_t i) : type_(uint64_type), u_() {
+	u_.uint64_ = i;
 }
 #endif
 
@@ -369,6 +388,17 @@ template <> inline bool value::is<double>() const {
       ;
 }
 
+#ifdef PICOJSON_USE_UINT64
+template <> inline bool value::is<uint64_t>() const {
+	return type_ == number_type
+#ifdef PICOJSON_USE_INT64
+		|| type_ == int64_type
+#endif
+		|| type_ == uint64_type
+		;
+}
+#endif
+
 #define GET(ctype, var)                                                                                                            \
   template <> inline const ctype &value::get<ctype>() const {                                                                      \
     PICOJSON_ASSERT("type mismatch! call is<type>() before get<type>()" && is<ctype>());                                           \
@@ -390,6 +420,13 @@ GET(int64_t, u_.int64_)
 #else
 GET(double, u_.number_)
 #endif
+/*
+ * Warning: that's may be wrong,
+ * no special GET for double, like in int64
+ */
+#ifdef PICOJSON_USE_UINT64
+GET(uint64_t, u_.uint64_)
+#endif
 #undef GET
 
 #define SET(ctype, jtype, setter)                                                                                                  \
@@ -405,6 +442,9 @@ SET(object, object, u_.object_ = new object(_val);)
 SET(double, number, u_.number_ = _val;)
 #ifdef PICOJSON_USE_INT64
 SET(int64_t, int64, u_.int64_ = _val;)
+#endif
+#ifdef PICOJSON_USE_UINT64
+SET(uint64_t, uint64, u_.uint64_ = _val;)
 #endif
 #undef SET
 
@@ -432,6 +472,10 @@ inline bool value::evaluate_as_boolean() const {
 #ifdef PICOJSON_USE_INT64
   case int64_type:
     return u_.int64_ != 0;
+#endif
+#ifdef PICOJSON_USE_UINT64
+  case uint64_type:
+	  return u_.uint64_ != 0;
 #endif
   case string_type:
     return !u_.string_->empty();
@@ -487,6 +531,13 @@ inline std::string value::to_str() const {
   case int64_type: {
     char buf[sizeof("-9223372036854775808")];
     SNPRINTF(buf, sizeof(buf), "%" PRId64, u_.int64_);
+    return buf;
+  }
+#endif
+#ifdef PICOJSON_USE_UINT64
+  case uint64_type: {
+    char buf[sizeof("18446744073709551615")];
+	SNPRINTF(buf, sizeof(buf), "%" PRIu64, u_.uint64_);
     return buf;
   }
 #endif
@@ -914,6 +965,17 @@ template <typename Context, typename Iter> inline bool _parse(Context &ctx, inpu
         }
       }
 #endif
+#ifdef PICOJSON_USE_UINT64
+	  {
+		  errno = 0;
+		  uintmax_t ival = strtoumax(num_str.c_str(), &endp, 10);
+		  if (errno == 0 && std::numeric_limits<uint64_t>::min() <= ival && ival <= std::numeric_limits<uint64_t>::max() &&
+			  endp == num_str.c_str() + num_str.size()) {
+			  ctx.set_uint64(ival);
+			  return true;
+		  }
+	  }
+#endif
       f = strtod(num_str.c_str(), &endp);
       if (endp == num_str.c_str() + num_str.size()) {
         ctx.set_number(f);
@@ -938,6 +1000,11 @@ public:
 #ifdef PICOJSON_USE_INT64
   bool set_int64(int64_t) {
     return false;
+  }
+#endif
+#ifdef PICOJSON_USE_UINT64
+  bool set_uint64(uint64_t) {
+	  return false;
   }
 #endif
   bool set_number(double) {
@@ -983,6 +1050,12 @@ public:
   bool set_int64(int64_t i) {
     *out_ = value(i);
     return true;
+  }
+#endif
+#ifdef PICOJSON_USE_UINT64
+  bool set_uint64(uint64_t i) {
+	  *out_ = value(i);
+	  return true;
   }
 #endif
   bool set_number(double f) {
@@ -1053,6 +1126,11 @@ public:
 #ifdef PICOJSON_USE_INT64
   bool set_int64(int64_t) {
     return true;
+  }
+#endif
+#ifdef PICOJSON_USE_UINT64
+  bool set_uint64(uint64_t) {
+	  return true;
   }
 #endif
   bool set_number(double) {

@@ -190,6 +190,8 @@ Turning on the feature will cause following changes to picojson:
 
 Enabling the feature should not cause compatibility problem with code that do not use the feature.
 
+## Also avaliable experimental support for uint64_t
+
 ## Further reading
 
 Examples can be found in the <i>examples</i> directory, and on the [Wiki](https://github.com/kazuho/picojson/wiki).  Please add your favorite examples to the Wiki.
