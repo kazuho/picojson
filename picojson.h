@@ -97,11 +97,19 @@ extern "C" {
 #endif
 
 #ifndef PICOJSON_ASSERT
+#ifndef PICOJSON_DISABLE_EXCEPTION
 #define PICOJSON_ASSERT(e)                                                                                                         \
   do {                                                                                                                             \
     if (!(e))                                                                                                                      \
       throw std::runtime_error(#e);                                                                                                \
   } while (0)
+#else
+#define PICOJSON_ASSERT(e)                                                                                                         \
+  do {                                                                                                                             \
+    if (!(e))                                                                                                                      \
+      std::abort();                                                                                                                \
+  } while (0)
+#endif  // PICOJSON_DISABLE_EXCEPTION
 #endif
 
 #ifdef _MSC_VER
@@ -252,7 +260,11 @@ inline value::value(double n) : type_(number_type), u_() {
       isnan(n) || isinf(n)
 #endif
           ) {
+#ifndef PICOJSON_DISABLE_EXCEPTION
     throw std::overflow_error("");
+#else
+    std::abort();
+#endif
   }
   u_.number_ = n;
 }
