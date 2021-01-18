@@ -961,6 +961,9 @@ public:
   template <typename Iter> bool parse_object_item(input<Iter> &, const std::string &) {
     return false;
   }
+  bool parse_object_stop() {
+    return false;
+  }  
 };
 
 class default_parse_context {
