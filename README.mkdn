@@ -29,7 +29,7 @@ std::string json = "[ \"hello JSON\" ]";
 picojson::value v;
 std::string err = picojson::parse(v, json);
 if (! err.empty()) {
-  std:cerr << err << std::endl;
+  std::cerr << err << std::endl;
 }
 ```
 
@@ -145,7 +145,7 @@ const picojson::value::object& obj = v.get&lt;picojson::object&gt;();
 for (picojson::value::object::const_iterator i = obj.begin();
      i != obj.end();
      ++i) {
-  std::cout &lt;&lt; i-&gt;first &lt;&lt; ': ' &lt;&lt; i-&gt;second.to_str() &lt;&lt; std::endl;
+  std::cout &lt;&lt; i-&gt;first &lt;&lt; " : " &lt;&lt; i-&gt;second.to_str() &lt;&lt; std::endl;
 }
 </pre>
 
