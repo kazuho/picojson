@@ -29,7 +29,7 @@ std::string json = "[ \"hello JSON\" ]";
 picojson::value v;
 std::string err = picojson::parse(v, json);
 if (! err.empty()) {
-  std:cerr << err << std::endl;
+  std::cerr << err << std::endl;
 }
 ```
 
