@@ -39,6 +39,9 @@ public:
   bool parse_array_start() {
     return true; // only allow array as root
   }
+  bool parse_array_stop(size_t) {
+    return true;
+  }
   template <typename Iter> bool parse_array_item(picojson::input<Iter> &in, size_t) {
     picojson::value item;
     // parse the array item
@@ -61,7 +64,7 @@ int main(void) {
   root_context ctx;
   std::string err;
 
-  picojson::_parse(ctx, std::istream_iterator<char>(std::cin), std::istream_iterator<char>(), &err);
+  picojson::_parse(ctx, std::istreambuf_iterator<char>(std::cin), std::istreambuf_iterator<char>(), &err);
 
   if (!err.empty()) {
     std::cerr << err << std::endl;
