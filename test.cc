@@ -55,6 +55,9 @@ int main(void)
   TEST( (false), "false");
   TEST( (42.0),   "42");
   TEST( (string("hello")), "\"hello\"");
+#if __cplusplus >= 201703L
+  TEST( (string_view("hello")), "\"hello\"");
+#endif
   TEST( ("hello"), "\"hello\"");
   TEST( ("hello", 4), "\"hell\"");
 
