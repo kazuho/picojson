@@ -24,18 +24,18 @@ There are several ways to use the pull (DOM-like) interface of picojson.
 
 The easiest way is to use the two-argument `parse` function.
 
-```
+```C++
 std::string json = "[ \"hello JSON\" ]";
 picojson::value v;
 std::string err = picojson::parse(v, json);
 if (! err.empty()) {
-  std:cerr << err << std::endl;
+  std::cerr << err << std::endl;
 }
 ```
 
 Four-argument `parse` function accepts a pair of iterators, and returns the end position of the input.
 
-```
+```C++
 const char* json = "{\"a\":1}";
 picojson::value v;
 std::string err;
@@ -45,7 +45,7 @@ if (! err.empty()) {
 }
 ```
 
-```
+```C++
 std::istream_iterator input(std::cin);
 picojson::value v;
 std::string err;
@@ -57,7 +57,7 @@ if (! err.empty()) {
 
 It is also possible to use the `>>` operator to parse the input, however this interface is not thread-safe.
 
-```
+```C++
 picosjon::value v;
 std::cin >> v;
 std::string err = picojson::get_last_error();
@@ -145,7 +145,7 @@ const picojson::value::object& obj = v.get&lt;picojson::object&gt;();
 for (picojson::value::object::const_iterator i = obj.begin();
      i != obj.end();
      ++i) {
-  std::cout &lt;&lt; i-&gt;first &lt;&lt; ': ' &lt;&lt; i-&gt;second.to_str() &lt;&lt; std::endl;
+  std::cout &lt;&lt; i-&gt;first &lt;&lt; ": " &lt;&lt; i-&gt;second.to_str() &lt;&lt; std::endl;
 }
 </pre>
 
