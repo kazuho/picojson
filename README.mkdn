@@ -24,7 +24,7 @@ There are several ways to use the pull (DOM-like) interface of picojson.
 
 The easiest way is to use the two-argument `parse` function.
 
-```
+```c++
 std::string json = "[ \"hello JSON\" ]";
 picojson::value v;
 std::string err = picojson::parse(v, json);
@@ -35,7 +35,7 @@ if (! err.empty()) {
 
 Four-argument `parse` function accepts a pair of iterators, and returns the end position of the input.
 
-```
+```c++
 const char* json = "{\"a\":1}";
 picojson::value v;
 std::string err;
@@ -45,7 +45,7 @@ if (! err.empty()) {
 }
 ```
 
-```
+```c++
 std::istream_iterator input(std::cin);
 picojson::value v;
 std::string err;
@@ -57,7 +57,7 @@ if (! err.empty()) {
 
 It is also possible to use the `>>` operator to parse the input, however this interface is not thread-safe.
 
-```
+```c++
 picosjon::value v;
 std::cin >> v;
 std::string err = picojson::get_last_error();
@@ -67,7 +67,7 @@ std::string err = picojson::get_last_error();
 
 Values of a JSON object is represented as instances of picojson::value class.
 
-<pre>
+```c++
 namespace picojson {
 
   class value {
@@ -75,8 +75,8 @@ namespace picojson {
 
   public:
 
-    typedef std::vector&lt;value&gt; array;
-    typedef std::map&lt;std::string, value&gt; object;
+    typedef std::vector<value> array;
+    typedef std::map<std::string, value> object;
 
     value();                               // create a null object
     explicit value(bool b);                // create a boolean object
@@ -85,28 +85,28 @@ namespace picojson {
     explicit value(const array& a);        // create an array object
     explicit value(const object& o);       // create an "object"
 
-    bool is&lt;picojson::null&gt;() const;       // check if the object is "null"
+    bool is<picojson::null>() const;       // check if the object is "null"
 
-    bool is&lt;bool&gt;() const;                 // check if the object is a boolean
-    const bool& get&lt;bool&gt;() const;         // const accessor (usable only if the object is a boolean)
-    bool& get&lt;bool&gt;();                     // non-const accessor (usable only if the object is a boolean)
+    bool is<bool>() const;                 // check if the object is a boolean
+    const bool& get<bool>() const;         // const accessor (usable only if the object is a boolean)
+    bool& get<bool>();                     // non-const accessor (usable only if the object is a boolean)
 
-    bool is&lt;double&gt;() const;               // check if the object is a number
-    const double& get&lt;double&gt;() const;     // const accessor (usable only if the object is a number)
-    double& get&lt;double&gt;();                 // non-const accessor (usable only if the object is a number)
+    bool is<double>() const;               // check if the object is a number
+    const double& get<double>() const;     // const accessor (usable only if the object is a number)
+    double& get<double>();                 // non-const accessor (usable only if the object is a number)
 
-    bool is&lt;std::string&gt;() const;          // check if the object is a string
-    const std::string& get&lt;std::string&gt;() const;
+    bool is<std::string>() const;          // check if the object is a string
+    const std::string& get<std::string>() const;
                                            // const accessor (usable only if the object is a string)
-    std::string& get&lt;std::string&gt;();       // non-const accessor (usable only if the object is a string)
+    std::string& get<std::string>();       // non-const accessor (usable only if the object is a string)
 
-    bool is&lt;array&gt;() const;                // check if the object is an array
-    const array& get&lt;array&gt;() const;       // const accessor (usable only if the object is an array)
-    array& get&lt;array&gt;();                   // non-const accessor (usable only if the object is an array)
+    bool is<array>() const;                // check if the object is an array
+    const array& get<array>() const;       // const accessor (usable only if the object is an array)
+    array& get<array>();                   // non-const accessor (usable only if the object is an array)
 
-    bool is&lt;object&gt;() const;               // check if the object is an "object"
-    const object& get&lt;object&gt;() const;     // const accessor (usable only if the object is an object)
-    object& get&lt;object&gt;();                 // non-const accessor (usable only if the object is an array)
+    bool is<object>() const;               // check if the object is an "object"
+    const object& get<object>() const;     // const accessor (usable only if the object is an object)
+    object& get<object>();                 // non-const accessor (usable only if the object is an array)
 
     bool evaluate_as_boolean() const;      // evaluates the object as a boolean
 
@@ -119,37 +119,37 @@ namespace picojson {
   };
 
 }
-</pre>
+```
 
 The code below parses a JSON string and prints the contents of the object.
 
-<pre>
+```c++
 picojson::value v;
 
 // parse the input
-std::cin &gt;&gt; v;
+std::cin >> v;
 std::string err = picojson::get_last_error();
 if (! err.empty()) {
-  std::cerr &lt;&lt; err &lt;&lt; std::endl;
+  std::cerr << err << std::endl;
   exit(1);
 }
 
 // check if the type of the value is "object"
-if (! v.is&lt;picojson::object&gt;()) {
-  std::cerr &lt;&lt; "JSON is not an object" &lt;&lt; std::endl;
+if (! v.is<picojson::object>()) {
+  std::cerr << "JSON is not an object" << std::endl;
   exit(2);
 }
 
 // obtain a const reference to the map, and print the contents
-const picojson::value::object& obj = v.get&lt;picojson::object&gt;();
+const picojson::value::object& obj = v.get<picojson::object>();
 for (picojson::value::object::const_iterator i = obj.begin();
      i != obj.end();
      ++i) {
-  std::cout &lt;&lt; i-&gt;first &lt;&lt; ': ' &lt;&lt; i-&gt;second.to_str() &lt;&lt; std::endl;
+  std::cout << i->first << ': ' << i->second.to_str() << std::endl;
 }
-</pre>
+```
 
-Please note that the type check is mandatory; do not forget to check the type of the object by calling is&lt;type&gt;() before accessing the value by calling get&lt;type&gt;().
+Please note that the type check is mandatory; do not forget to check the type of the object by calling is<type>() before accessing the value by calling get<type>().
 
 ## Reading JSON using the streaming (event-driven) interface
 
@@ -159,23 +159,23 @@ Please refer to the implementation of picojson::default_parse_context and picojs
 
 Instances of the picojson::value class can be serialized in three ways, to ostream, to std::string, or to an output iterator.
 
-<pre>
+```c++
 picojson::value v;
 ...
-std::cout &lt;&lt; v;
-</pre>
+std::cout << v;
+```
 
-<pre>
+```c++
 picojson::value v;
 ...
 std::string json = v.serialize();
-</pre>
+```
 
-<pre>
+```c++
 picojson::value v;
 ...
-v.serialize(std::ostream_iterator&lt;char&gt;(std::cout));
-</pre>
+v.serialize(std::ostream_iterator<char>(std::cout));
+```
 
 ## Experimental support for int64_t
 
