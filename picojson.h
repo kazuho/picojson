@@ -1132,7 +1132,12 @@ inline std::string parse(value &out, const std::string &s) {
 
 inline std::string parse(value &out, std::istream &is) {
   std::string err;
-  parse(out, std::istreambuf_iterator<char>(is.rdbuf()), std::istreambuf_iterator<char>(), &err);
+  const auto &beg = std::istreambuf_iterator<char>(is.rdbuf());
+  const auto &end = std::istreambuf_iterator<char>();
+  parse(out, beg, end, &err);
+  if (beg == end) {
+    is.setstate(std::ios_base::eofbit);
+  }
   return err;
 }
 
