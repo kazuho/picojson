@@ -184,7 +184,9 @@ public:
   template <typename T> T &get();
   template <typename T> void set(const T &);
 #if PICOJSON_USE_RVALUE_REFERENCE
-  template <typename T> void set(T &&);
+  void set(std::string &&);
+  void set(object &&);
+  void set(array &&);
 #endif
   bool evaluate_as_boolean() const;
   const value &get(const size_t idx) const;
@@ -251,7 +253,7 @@ inline value::value(double n) : type_(number_type), u_() {
 #else
       isnan(n) || isinf(n)
 #endif
-          ) {
+  ) {
     throw std::overflow_error("");
   }
   u_.number_ = n;
@@ -349,9 +351,7 @@ inline void value::swap(value &x) PICOJSON_NOEXCEPT {
 }
 
 #define IS(ctype, jtype)                                                                                                           \
-  template <> inline bool value::is<ctype>() const {                                                                               \
-    return type_ == jtype##_type;                                                                                                  \
-  }
+  template <> inline bool value::is<ctype>() const { return type_ == jtype##_type; }
 IS(null, null)
 IS(bool, boolean)
 #ifdef PICOJSON_USE_INT64
@@ -410,7 +410,7 @@ SET(int64_t, int64, u_.int64_ = _val;)
 
 #if PICOJSON_USE_RVALUE_REFERENCE
 #define MOVESET(ctype, jtype, setter)                                                                                              \
-  template <> inline void value::set<ctype>(ctype && _val) {                                                                       \
+  inline void value::set(ctype &&_val) {                                                                                           \
     clear();                                                                                                                       \
     type_ = jtype##_type;                                                                                                          \
     setter                                                                                                                         \
@@ -1136,7 +1136,9 @@ inline std::string parse(value &out, std::istream &is) {
   return err;
 }
 
-template <typename T> struct last_error_t { static std::string s; };
+template <typename T> struct last_error_t {
+  static std::string s;
+};
 template <typename T> std::string last_error_t<T>::s;
 
 inline void set_last_error(const std::string &s) {
@@ -1169,14 +1171,14 @@ inline bool operator==(const value &x, const value &y) {
 inline bool operator!=(const value &x, const value &y) {
   return !(x == y);
 }
-}
+} // namespace picojson
 
 #if !PICOJSON_USE_RVALUE_REFERENCE
 namespace std {
 template <> inline void swap(picojson::value &x, picojson::value &y) {
   x.swap(y);
 }
-}
+} // namespace std
 #endif
 
 inline std::istream &operator>>(std::istream &is, picojson::value &x) {

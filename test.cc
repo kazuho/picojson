@@ -86,7 +86,14 @@ int main(void) {
     if (serialize_test) {                                                                                                          \
       is(v.serialize(), string(in), in " serialize");                                                                              \
     }                                                                                                                              \
+    picojson::value rvaluetest, nonconst_lvaluetest;                                                                               \
+    rvaluetest.set(static_cast<type>(cmp));                                                                                        \
+    is(rvaluetest.get<type>(), static_cast<type>(cmp), in " correct output");                                                      \
+    type lvaluesrc{cmp};                                                                                                           \
+    nonconst_lvaluetest.set(lvaluesrc);                                                                                            \
+    is(nonconst_lvaluetest.get<type>(), static_cast<type>(cmp), in " correct output");                                             \
   }
+
   TEST("false", bool, false, true);
   TEST("true", bool, true, true);
   TEST("90.5", double, 90.5, false);
