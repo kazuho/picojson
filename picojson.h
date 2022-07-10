@@ -96,11 +96,15 @@ extern "C" {
 }
 #endif
 
+#ifndef PICOJSON_THROW
+#define PICOJSON_THROW(e, m) throw e(m)
+#endif
+
 #ifndef PICOJSON_ASSERT
 #define PICOJSON_ASSERT(e)                                                                                                         \
   do {                                                                                                                             \
     if (!(e))                                                                                                                      \
-      throw std::runtime_error(#e);                                                                                                \
+      PICOJSON_THROW(std::runtime_error(#e));                                                                                      \
   } while (0)
 #endif
 
@@ -251,8 +255,8 @@ inline value::value(double n) : type_(number_type), u_() {
 #else
       isnan(n) || isinf(n)
 #endif
-          ) {
-    throw std::overflow_error("");
+  ) {
+    PICOJSON_THROW(std::overflow_error(""));
   }
   u_.number_ = n;
 }
