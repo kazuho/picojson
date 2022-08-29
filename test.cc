@@ -358,6 +358,7 @@ int main(void)
     std::string s = "[{\"a\":123}]", err;
     picojson::value v;
     picojson::default_parse_context ctx(&v, 1);
+    __attribute__((unused))
     std::string::const_iterator end = picojson::_parse(ctx, s.begin(), s.end(), &err);
     _ok(!err.empty(), "should fail");
     _ok(v.is<picojson::array>(), "should get an array");
@@ -367,6 +368,7 @@ int main(void)
   {
     std::string s = "[{\"a\":123}]", err;
     picojson::null_parse_context ctx(1);
+    __attribute__((unused))
     std::string::const_iterator end = picojson::_parse(ctx, s.begin(), s.end(), &err);
     _ok(!err.empty(), "should fail");
   }

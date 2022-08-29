@@ -151,7 +151,7 @@ public:
 
 protected:
   int type_;
-  _storage u_;
+  _storage u_ = {};
 
 public:
   value();
