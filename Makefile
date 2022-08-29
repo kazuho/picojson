@@ -8,10 +8,10 @@ test: test-core test-core-int64
 	./test-core-int64
 
 test-core: picojson.h test.cc picotest/picotest.c picotest/picotest.h
-	$(CXX) -Wall test.cc picotest/picotest.c -o $@
+	$(CXX) $(CXXFLAGS) -Wall test.cc picotest/picotest.c -o $@
 
 test-core-int64: picojson.h test.cc picotest/picotest.c picotest/picotest.h
-	$(CXX) -Wall -DPICOJSON_USE_INT64 test.cc picotest/picotest.c -o $@
+	$(CXX) $(CXXFLAGS) -Wall -DPICOJSON_USE_INT64 test.cc picotest/picotest.c -o $@
 
 clean:
 	rm -f test-core test-core-int64
