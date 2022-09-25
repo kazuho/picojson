@@ -536,7 +536,6 @@ template <typename Iter> struct serialize_str_char {
     break
       MAP('"', "\\\"");
       MAP('\\', "\\\\");
-      MAP('/', "\\/");
       MAP('\b', "\\b");
       MAP('\f', "\\f");
       MAP('\n', "\\n");
