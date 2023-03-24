@@ -35,7 +35,7 @@ typedef struct {
 
 MEMFILE *memfopen() {
   MEMFILE *mf = (MEMFILE *)malloc(sizeof(MEMFILE));
-  mf->data = NULL;
+  mf->data = nullptr;
   mf->size = 0;
   return mf;
 }
