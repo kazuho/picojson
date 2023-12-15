@@ -1,6 +1,9 @@
 prefix=/usr/local
 includedir=$(prefix)/include
 libdir=$(prefix)/lib
+ifdef pkgconfig_relocatable
+CMAKE_EXTRA_ARGS=-DPKGCONFIG_RELOCATABLE=TRUE
+endif
 
 check: test
 
@@ -20,7 +23,7 @@ clean:
 
 install:
 	mkdir -p build
-	cmake -DCMAKE_INSTALL_PREFIX=$(prefix) -DCMAKE_INSTALL_INCLUDEDIR=$(includedir) -S . -B build
+	cmake -DCMAKE_INSTALL_PREFIX=$(prefix) -DCMAKE_INSTALL_INCLUDEDIR=$(includedir) $(CMAKE_EXTRA_ARGS) -S . -B build
 	cmake --build build --target install
 
 uninstall:

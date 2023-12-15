@@ -6,6 +6,7 @@ project(picojson
 
 include(GNUInstallDirs)
 
+option(PKGCONFIG_RELOCATABLE "Create a pkgconfig file with relocatable path" OFF)
 set(INCLUDE_INSTALL_DIR "${CMAKE_INSTALL_INCLUDEDIR}"
     CACHE PATH "Location of header files"
 )
@@ -23,9 +24,13 @@ install(FILES picojson.h
 
 if(NOT WIN32)
     # Install pkg-config file
-    set(prefix "${CMAKE_INSTALL_PREFIX}")
-    set(includedir "${CMAKE_INSTALL_FULL_INCLUDEDIR}")
-    set(version ${PROJECT_VERSION})
+    if(PKGCONFIG_RELOCATABLE)
+        set(prefix "\${pcfiledir}/../..")
+        set(includedir "\${prefix}/include")
+    else()
+        set(prefix "${CMAKE_INSTALL_PREFIX}")
+        set(includedir "${CMAKE_INSTALL_FULL_INCLUDEDIR}")
+    endif()
     configure_file(picojson.pc.in
         "${CMAKE_CURRENT_BINARY_DIR}/picojson.pc"
         NEWLINE_STYLE UNIX
