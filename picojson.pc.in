@@ -3,5 +3,5 @@ includedir=@includedir@
 
 Name: picojson
 Description: Tiny JSON parser / serializer for C++
-Version: 1.3.0
+Version: @version@
 Cflags: -I${includedir}
