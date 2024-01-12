@@ -1,0 +1,7 @@
+prefix=@prefix@
+includedir=@includedir@
+
+Name: picojson
+Description: Tiny JSON parser / serializer for C++
+Version: @version@
+Cflags: -I${includedir}
