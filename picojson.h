@@ -137,7 +137,11 @@ struct null {};
 class value {
 public:
   typedef std::vector<value> array;
+#if __cplusplus >= 201402L
+  typedef std::map<std::string, value, std::less<>> object;
+#else
   typedef std::map<std::string, value> object;
+#endif
   union _storage {
     bool boolean_;
     double number_;
@@ -188,12 +192,12 @@ public:
 #endif
   bool evaluate_as_boolean() const;
   const value &get(const size_t idx) const;
-  const value &get(const std::string &key) const;
+  template <typename Key, std::enable_if_t<!std::is_integral<Key>::value, bool> = true> const value &get(const Key &key) const;
   value &get(const size_t idx);
-  value &get(const std::string &key);
+  template <typename Key, std::enable_if_t<!std::is_integral<Key>::value, bool> = true> value &get(const Key &key);
 
   bool contains(const size_t idx) const;
-  bool contains(const std::string &key) const;
+  template <typename Key, std::enable_if_t<!std::is_integral<Key>::value, bool> = true> bool contains(const Key &key) const;
   std::string to_str() const;
   template <typename Iter> void serialize(Iter os, bool prettify = false) const;
   std::string serialize(bool prettify = false) const;
@@ -452,14 +456,14 @@ inline value &value::get(const size_t idx) {
   return idx < u_.array_->size() ? (*u_.array_)[idx] : s_null;
 }
 
-inline const value &value::get(const std::string &key) const {
+template <typename Key, std::enable_if_t<!std::is_integral<Key>::value, bool>> inline const value &value::get(const Key &key) const {
   static value s_null;
   PICOJSON_ASSERT(is<object>());
   object::const_iterator i = u_.object_->find(key);
   return i != u_.object_->end() ? i->second : s_null;
 }
 
-inline value &value::get(const std::string &key) {
+template <typename Key, std::enable_if_t<!std::is_integral<Key>::value, bool>> inline value &value::get(const Key &key) {
   static value s_null;
   PICOJSON_ASSERT(is<object>());
   object::iterator i = u_.object_->find(key);
@@ -471,7 +475,7 @@ inline bool value::contains(const size_t idx) const {
   return idx < u_.array_->size();
 }
 
-inline bool value::contains(const std::string &key) const {
+template <typename Key, std::enable_if_t<!std::is_integral<Key>::value, bool>> inline bool value::contains(const Key &key) const {
   PICOJSON_ASSERT(is<object>());
   object::const_iterator i = u_.object_->find(key);
   return i != u_.object_->end();
