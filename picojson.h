@@ -547,7 +547,7 @@ template <typename Iter> struct serialize_str_char {
     default:
       if (static_cast<unsigned char>(c) < 0x20 || c == 0x7f) {
         char buf[7];
-        SNPRINTF(buf, sizeof(buf), "\\u%04x", c & 0xff);
+        SNPRINTF(buf, sizeof(buf), "\\u%04x", static_cast<unsigned int>(c & 0xff)); //cast is not really necessary but silences warnings
         copy(buf, buf + 6, oi);
       } else {
         *oi++ = c;
