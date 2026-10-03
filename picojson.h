@@ -916,8 +916,7 @@ template <typename Context, typename Iter> inline bool _parse(Context &ctx, inpu
 #endif
       f = strtod(num_str.c_str(), &endp);
       if (endp == num_str.c_str() + num_str.size()) {
-        ctx.set_number(f);
-        return true;
+        return ctx.set_number(f);
       }
       return false;
     }
@@ -986,6 +985,21 @@ public:
   }
 #endif
   bool set_number(double f) {
+    if (
+#ifdef _MSC_VER
+        !_finite(f)
+#elif __cplusplus >= 201103L
+        !std::isfinite(f)
+#else
+        isnan(f) || isinf(f)
+#endif
+            ) {
+      // A literal that strtod only resolves to +-HUGE_VAL/NaN would
+      // otherwise reach the value(double) constructor, which throws.
+      // Treat it as a parse failure instead of letting that escape
+      // through parse(), which promises to report errors, not throw.
+      return false;
+    }
     *out_ = value(f);
     return true;
   }

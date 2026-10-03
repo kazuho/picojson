@@ -172,6 +172,13 @@ int main(void)
   TEST("{]", "1 near: ]");
   TEST("\n\bbell", "2 near: bell");
   TEST("\"abc\nd\"", "1 near: ");
+  // A numeric literal that strtod only resolves to +-HUGE_VAL must be
+  // reported the same way as any other malformed input, not thrown as
+  // an uncaught std::overflow_error out of value(double) (see the NaN
+  // and infinity constructor checks below).
+  TEST("1e400", "1 near: ");
+  TEST("[1e400]", "1 near: ]");
+  TEST("-1e400", "1 near: ");
 #undef TEST
   
   {
